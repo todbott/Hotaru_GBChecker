@@ -259,10 +259,25 @@ class CheckOrEdit extends React.Component {
         document.getElementById('root')
       );
     }
+
+    handleCreateClick() {
+      ReactDOM.render(
+        <React.StrictMode>
+          <CreateTmx />
+        </React.StrictMode>,
+        document.getElementById('root')
+      );
+    }
+
     render() {
       return (
         <Container>
           <Row style={{ marginTop: 50, marginBottom: 5}}>
+            <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
+              <h3>翻訳チェック・メモリ更新</h3>
+            </Col>
+          </Row>
+          <Row style={{ marginTop: 20, marginBottom: 5}}>
           <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
             納品されたトラドスプロジェクトから *.tmx ファイルを抽出してから...
             </Col>
@@ -272,7 +287,7 @@ class CheckOrEdit extends React.Component {
               <Button variant="secondary" size="lg" onClick={this.handleCheckClick}>逆引きチェックを行う</Button>
             </Col>
           </Row>
-          <Row style={{ marginTop: 50, marginBottom: 5}}>
+          <Row style={{ marginTop: 20, marginBottom: 5}}>
           <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
             上記の逆引きチェックによってもし誤訳がありましたら、再翻訳が翻訳会社から頂いてから...
             </Col>
@@ -282,7 +297,7 @@ class CheckOrEdit extends React.Component {
               <Button variant="warning" size="lg" onClick={this.handleUpdateClick}>再翻訳によってメモリを更新</Button>
             </Col>
           </Row>
-          <Row style={{ marginTop: 50, marginBottom: 5}}>
+          <Row style={{ marginTop: 20, marginBottom: 5}}>
           <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
             逆引きチェックによる誤訳がない場合、納品されたトラドスプロジェクトから *.tmx ファイル（またはただの原文・訳文テキスト）を使って...
             </Col>
@@ -291,7 +306,22 @@ class CheckOrEdit extends React.Component {
             <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
               <Button variant="success" size="lg" onClick={this.handleMergeClick}>メイン翻訳メモリを更新</Button>
             </Col>
+          </Row>
+          <Row style={{ marginTop: 50, marginBottom: 5}}>
+            <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
+              <h3>メモリ作成</h3>
+            </Col>
           </Row>  
+          <Row style={{ marginTop: 20, marginBottom: 5}}>
+            <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
+              条件を選択してから、
+            </Col>
+          </Row>
+          <Row>
+				    <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
+              <Button variant="warning" size="lg" onClick={this.handleCreateClick}>カスタムメモリファイルをダウンロード</Button>
+            </Col>
+          </Row>
         </Container>
       )}
 
@@ -451,8 +481,8 @@ class UpdateTmx extends React.Component {
       show: false,
       modalTitle: "",
       modalBody: "",
-      value: null,
-      fileName: "",
+ 
+  
       forSearch: "",
       thisTarget: "",
       segmentArray: [],
@@ -460,18 +490,19 @@ class UpdateTmx extends React.Component {
       numberOfUpdates: 0,
       showSearchArea: false,
       zuban: "",
-      sourceCode: "en",
-      targetCode: "en",
+      sourceCode: "en-us",
+      targetCode: "en-us",
+      category: "AirPurifier",
 
       BorK: '',
 
-      sourceKanji: "英語",
-      targetKanji: "英語"
+      sourceKanji: "英語（北米）",
+      targetKanji: "英語（北米）"
     };
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleSearchClick = this.handleSearchClick.bind(this);
     this.handleUpdateClick = this.handleUpdateClick.bind(this);
-    this.handleDownloadClick = this.handleDownloadClick.bind(this);
+    this.handleFinishClick = this.handleFinishClick.bind(this);
     this.handleClose = this.handleClose.bind(this);
   }
 
@@ -496,48 +527,46 @@ class UpdateTmx extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    const reader = new FileReader()
-    reader.onload = async (event) => { 
-      const contents = (event.target.result)   
-      
-      var allSegments = []
 
-      var XMLParser = require('react-xml-parser');
-      var xml = new XMLParser().parseFromString(contents);    
-      var allTuvs = xml.getElementsByTagName('tuv');
-      for (var t = 0; t < allTuvs.length; t++) {
-        if (allTuvs[t].attributes['xml:lang'].indexOf(this.state.sourceCode) > -1) {
-          allSegments.push(allTuvs[t].getElementsByTagName('seg')[0].value)
-        } else {
-          allSegments.push(allTuvs[t].getElementsByTagName('seg')[0].value)
-        }
-      }
-      this.setState({segmentArray: allSegments})
+    // get all sentences using the getPutSentencesForHotaru endpoint in GCP
+    let emailToBorK = ""
+    if (this.state.BorK === "nishino@hotaru.ltd") {
+      emailToBorK = "B"
+    } else {
+      emailToBorK = "K"
+    }
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        get_or_put: 'get',
+        source: this.state.sourceCode,
+        target: this.state.targetCode,
+        s_sentence: '',
+        t_sentence: '',
+        b_or_k: emailToBorK,
+        category: this.state.category,
+        associated_zuban: ''
+      })
+    };
+    console.log(requestOptions.body);
+    fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
+      .then(response => response.json())
+      .then(data => {
+
+        console.log(data);
+        this.setState({segmentArray: data.contents});
+
+      });
       // -----------------------------------------
       this.setState({showSearchArea: true})
-    };
-    reader.readAsText(this.state.value)
+    
   }
 
-  handleDownloadClick() {
+  handleFinishClick() {
 
-    // put the XML back together
-    var finalXml = `<?xml version="1.0" encoding="utf-8"?><tmx version="1.4"><header creationtool="Hotaru_GBChecker" creationtoolversion="6.1" datatype="tmx" segtype="sentence" o-tmf="GlossaryFile" srclang="${this.state.sourceCode}"/><body>`
-    let sa = this.state.segmentArray;
-    for (var i = 0; i < sa.length; i = i + 2) {
-      finalXml = finalXml + `<tu tuid="${i}"><tuv xml:lang="${this.state.sourceCode}"><seg>` + sa[i] + `</seg></tuv><tuv xml:lang="${this.state.targetCode}"><seg>` + sa[i+1] + `</seg></tuv></tu>`
-    };
-    finalXml = finalXml + `</body></tmx>`
-   
-    const element = document.createElement("a");
-    const file = new Blob([finalXml],    
-                {type: 'text/plain;charset=utf-8'});
-    element.href = URL.createObjectURL(file);
-    let fnString = this.state.fileName.replace(".tmx", "") + "_" + this.state.numberOfUpdates + "_segments_updated.tmx"
-    element.download = fnString;
-    document.body.appendChild(element);
-    element.click();
-
+    // send a POST request to the backend, triggering an email to everyone about
+    // the update
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -546,7 +575,6 @@ class UpdateTmx extends React.Component {
         zuban: this.state.zuban,
         source: this.state.sourceKanji,
         target: this.state.targetKanji,
-        memory: this.state.fileName,
         updates: this.state.numberOfUpdates,
         additions: '0',
         BorK: this.state.BorK
@@ -556,10 +584,44 @@ class UpdateTmx extends React.Component {
       .then(response => response.json())
       .then(data => console.log(data));
 
+    // Then, update the actual segments by sending them to the backend
+    let emailToBorK = ""
+    if (this.state.BorK === "nishino@hotaru.ltd") {
+      emailToBorK = "B"
+    } else {
+      emailToBorK = "K"
+    }
+
+    let ssegs = []
+    let tsegs = []
+    let sa = this.state.segmentArray;
+    for (var s = 0; s < sa.length; s = s + 2) {
+      ssegs.push(sa[s])
+      tsegs.push(sa[s+1])
+    }
+
+    const requestOptionsPut = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        get_or_put: 'put',
+        source: this.state.sourceCode,
+        target: this.state.targetCode,
+        s_sentence: ssegs,
+        t_sentence: tsegs,
+        b_or_k: emailToBorK,
+        category: this.state.category,
+        associated_zuban: ''
+      })
+    };
+    console.log(requestOptionsPut.body);
+    fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
+      .then(response => response.json())
+      .then(data => console.log(data));
 
     this.setState({show: true})
     this.setState({modalTitle: "Complete"})
-    this.setState({modalBody: "更新された*.tmx ファイルがダウンロードフォルダに保存されました。その上、「メモリ更新」 がトッドに送信されました。"})
+    this.setState({modalBody: "更新した原文・訳文ペアがデータベースに保存されました。その上、「メモリ更新」 がトッドに送信されました。"})
   }
 
   handleClose() {
@@ -636,7 +698,7 @@ class UpdateTmx extends React.Component {
         </Row>         
         <Row style={{ marginTop: 50, marginBottom: 5}}>
 				  <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">     
-            <Button variant="success" size="lg" onClick={this.handleDownloadClick}>更新が完了</Button>
+            <Button variant="success" size="lg" onClick={this.handleFinishClick}>更新が完了</Button>
           </Col>
         </Row>
         </Container>
@@ -645,18 +707,31 @@ class UpdateTmx extends React.Component {
           <Form>
             <Form.Group controlId="formFile" className="mb-3">
             <Row style={{ marginTop: 5, marginBottom: 5}}>
-				      <Col className="d-grid gap-2">     
+                <Col className="d-grid gap-2">    
 
-              <Form.Label style={{ marginTop: 5, marginBottom: 5}}>*.tmxファイルを選んでください</Form.Label>
+                <Form.Label style={{ marginTop: 5, marginBottom: 5, marginRight: 5}}>カテゴリ選んでください</Form.Label>
                 <br />
-                <Form.Control 
-                  type="file" 
-                  onChange={(e) => {
-                    this.setState({value: e.target.files[0]});
-                    this.setState({fileName: e.target.files[0].name})}
-                   } />
+                <select onChange={(e) => {
+                  this.setState({category: e.target.value});
+                }}>
+                    <option value="AirPurifier">空気清浄機</option>
+                    <option value="AirConditionerInstallation">エアコン（据説）</option>
+                    <option value="VrvInstallation">VRV（据説）</option>
+                    <option value="AirConditionerOperation">エアコン（取説）</option>
+                    <option value="DgpfEdge">DGPFエッジ</option>
+                    <option value="OilCon">オイルコン</option>
+                    <option value="Chiller">チラー</option>
+                    <option value="WaterHeater">給湯器</option>
+                    <option value="DecorationPanel">デコレーションパネル</option>
+                    <option value="WiredRemoteController">有線リモコン</option>
+                    <option value="WirelessAdapter">無線アダプター</option>
+                    <option value="SpecManual">仕様書</option>
+                    <option value="InfoPlate">銘版</option>
+                    <option value="SmartphoneApp">アプリ</option>
+                </select>   
                 </Col>
               </Row>
+
               <Row style={{ marginTop: 5, marginBottom: 5}}>
 				        <Col className="d-grid gap-2">     
 
@@ -677,21 +752,25 @@ class UpdateTmx extends React.Component {
                   this.setState({sourceCode: e.target.value});
                   this.setState({sourceKanji: e.target.options[e.target.selectedIndex].text})
                 }}>
-                    <option value="en">英語</option>
-                    <option value="fr">フランス語</option>
-                    <option value="es">スペイン語</option>
-                    <option value="ja">日本語</option>
-                    <option value="zh">繁体字</option>
-                    <option value="zh">簡体字</option>
-                    <option value="ko">韓国語</option>
-                    <option value="pt">ポルトガル語</option>
-                    <option value="el">ギリシャ</option>
-                    <option value="nl">オランダ語</option>
-                    <option value="de">ドイツ語</option>
-                    <option value="ru">ロシア語</option>
-                    <option value="it">イタリア語</option>
-                    <option value="pl">ポーランド語</option>
-                    <option value="tr">トルコ語</option>
+                    <option value="en-us">英語(北米)</option>
+                    <option value="en-uk">英語(UK)</option>
+                    <option value="fr-ca">フランス語(カナダ)</option>
+                    <option value="es-mx">スペイン語(メキシコ)</option>
+                    <option value="ja-jp">日本語</option>
+                    <option value="zh-tw">繁体字</option>
+                    <option value="zh-cn">簡体字</option>
+                    <option value="ko-ko">韓国語</option>
+                    <option value="fr-fr">フランス語(ヨーロッパ)</option>
+                    <option value="es-es">スペイン語(ヨーロッパ)</option>
+                    <option value="pt-pt">ポルトガル語(ポルトガル)</option>
+                    <option value="pt-br">ポルトガル語(ブラジル)</option>
+                    <option value="el-el">ギリシャ</option>
+                    <option value="nl-nl">オランダ語</option>
+                    <option value="de-de">ドイツ語</option>
+                    <option value="ru-ru">ロシア語</option>
+                    <option value="it-it">イタリア語</option>
+                    <option value="pl-pl">ポーランド語</option>
+                    <option value="tr-tr">トルコ語</option>
                 </select>
               </Col>
               </Row>
@@ -705,21 +784,25 @@ class UpdateTmx extends React.Component {
                   this.setState({targetCode: e.target.value});
                   this.setState({targetKanji: e.target.options[e.target.selectedIndex].text})
                 }}>
-                    <option value="en">英語</option>
-                    <option value="fr">フランス語</option>
-                    <option value="es">スペイン語</option>
-                    <option value="ja">日本語</option>
-                    <option value="zh">繁体字</option>
-                    <option value="zh">簡体字</option>
-                    <option value="ko">韓国語</option>
-                    <option value="pt">ポルトガル語</option>
-                    <option value="el">ギリシャ</option>
-                    <option value="nl">オランダ語</option>
-                    <option value="de">ドイツ語</option>
-                    <option value="ru">ロシア語</option>
-                    <option value="it">イタリア語</option>
-                    <option value="pl">ポーランド語</option>
-                    <option value="tr">トルコ語</option>
+                    <option value="en-us">英語(北米)</option>
+                    <option value="en-uk">英語(UK)</option>
+                    <option value="fr-ca">フランス語(カナダ)</option>
+                    <option value="es-mx">スペイン語(メキシコ)</option>
+                    <option value="ja-jp">日本語</option>
+                    <option value="zh-tw">繁体字</option>
+                    <option value="zh-cn">簡体字</option>
+                    <option value="ko-ko">韓国語</option>
+                    <option value="fr-fr">フランス語(ヨーロッパ)</option>
+                    <option value="es-es">スペイン語(ヨーロッパ)</option>
+                    <option value="pt-pt">ポルトガル語(ポルトガル)</option>
+                    <option value="pt-br">ポルトガル語(ブラジル)</option>
+                    <option value="el-el">ギリシャ</option>
+                    <option value="nl-nl">オランダ語</option>
+                    <option value="de-de">ドイツ語</option>
+                    <option value="ru-ru">ロシア語</option>
+                    <option value="it-it">イタリア語</option>
+                    <option value="pl-pl">ポーランド語</option>
+                    <option value="tr-tr">トルコ語</option>
                 </select>   
               </Col>
             </Row>
@@ -773,15 +856,14 @@ class MergeTmx extends React.Component {
       goOn: false,
 
       BorK: '',
+      category: 'AirPurifier',
 
       pastedSource: "",
       pastedTarget: "",
 
       file: null,
-      baseFile: null,
-
       fileName: "",
-      baseFileName: "",
+
 
       segmentArray: [],
       baseSegmentArray: [],
@@ -790,17 +872,17 @@ class MergeTmx extends React.Component {
       numberOfAdditions: 0,
       
       zuban: "",
-      sourceCode: "en",
-      targetCode: "en",
-      sourceKanji: "英語",
-      targetKanji: "英語"
+      sourceCode: "en-us",
+      targetCode: "en-us",
+      sourceKanji: "英語（北米）",
+      targetKanji: "英語（北米）"
     };
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleClose = this.handleClose.bind(this);
   }
 
 
-  getTmxContents(contents, which) {
+  getTmxContents(contents) {
      
       var allSegments = []
 
@@ -814,13 +896,8 @@ class MergeTmx extends React.Component {
           allSegments.push(allTuvs[t].getElementsByTagName('seg')[0].value)
         }
       }
-      if (which === "base") {
-        this.setState({baseSegmentArray: allSegments})
-
-      } else {
-        this.setState({segmentArray: allSegments})  
-      }
       
+      this.setState({segmentArray: allSegments})  
   }
 
   async handleFileChosen(file) {
@@ -843,6 +920,35 @@ class MergeTmx extends React.Component {
     return results;
   }
 
+  async getPairsFromBackend() {
+    // get sentences using the getPutSentencesForHotaru endpoint in GCP
+    let emailToBorK = ""
+    if (this.state.BorK === "nishino@hotaru.ltd") {
+      emailToBorK = "B"
+    } else {
+      emailToBorK = "K"
+    }
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        get_or_put: 'get',
+        source: this.state.sourceCode,
+        target: this.state.targetCode,
+        s_sentence: '',
+        t_sentence: '',
+        b_or_k: emailToBorK,
+        category: this.state.category,
+        associated_zuban: ''
+      })
+    };
+    console.log(requestOptions.body);
+    const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
+    const json = await response.json();
+    this.setState({baseSegmentArray: json.contents})
+    return json.contents;
+  }
+
   async handleSubmit(event) {
     event.preventDefault();
 
@@ -851,21 +957,16 @@ class MergeTmx extends React.Component {
 
     if (this.state.updateFromTmx === true) {
 
-      let bothFiles = await this.readAllFiles([this.state.file, this.state.baseFile])
+      let bothFiles = await this.readAllFiles([this.state.file])
       
       this.getTmxContents(bothFiles[0], "file")
-      this.getTmxContents(bothFiles[1], "base")
 
       newSegments = this.state.segmentArray
-      baseSegments = this.state.baseSegmentArray
+      baseSegments = await this.getPairsFromBackend();
 
     } else {
 
-      let baseFile = await this.readAllFiles([this.state.baseFile])
-
-      this.getTmxContents(baseFile[0], "base")
-
-      baseSegments = this.state.baseSegmentArray
+      baseSegments = await this.getPairsFromBackend();
 
       console.log(this.state.pastedSource)
       let pastedSourceArray = this.state.pastedSource.split(/\n/)
@@ -922,22 +1023,6 @@ class MergeTmx extends React.Component {
 
   handleDownloadClick() {
 
-    // put the XML back together
-    var finalXml = `<?xml version="1.0" encoding="utf-8"?><tmx version="1.4"><header creationtool="Hotaru_GBChecker" creationtoolversion="6.1" datatype="tmx" segtype="sentence" o-tmf="GlossaryFile" srclang="${this.state.sourceCode}"/><body>`
-    let sa = this.state.segmentArray;
-    for (var i = 0; i < sa.length; i = i + 2) {
-      finalXml = finalXml + `<tu tuid="${i}"><tuv xml:lang="${this.state.sourceCode}"><seg>` + sa[i] + `</seg></tuv><tuv xml:lang="${this.state.targetCode}"><seg>` + sa[i+1] + `</seg></tuv></tu>`
-    };
-    finalXml = finalXml + `</body></tmx>`
-   
-    const element = document.createElement("a");
-    const file = new Blob([finalXml],    
-                {type: 'text/plain;charset=utf-8'});
-    element.href = URL.createObjectURL(file);
-    element.download = this.state.baseFileName;
-    document.body.appendChild(element);
-    element.click();
-
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -946,7 +1031,6 @@ class MergeTmx extends React.Component {
         zuban: this.state.zuban,
         source: this.state.sourceKanji,
         target: this.state.targetKanji,
-        memory: this.state.baseFileName,
         updates: this.state.numberOfUpdates,
         additions: this.state.numberOfAdditions,
         BorK: this.state.BorK
@@ -957,9 +1041,44 @@ class MergeTmx extends React.Component {
       .then(response => response.json())
       .then(data => console.log(data));
 
+    // Then, update the actual segments by sending them to the backend
+    let emailToBorK = ""
+    if (this.state.BorK === "nishino@hotaru.ltd") {
+      emailToBorK = "B"
+    } else {
+      emailToBorK = "K"
+    }
+
+    let ssegs = []
+    let tsegs = []
+    let sa = this.state.segmentArray;
+    for (var s = 0; s < sa.length; s = s + 2) {
+      ssegs.push(sa[s])
+      tsegs.push(sa[s+1])
+    }
+
+    const requestOptionsPut = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        get_or_put: 'put',
+        source: this.state.sourceCode,
+        target: this.state.targetCode,
+        s_sentence: ssegs,
+        t_sentence: tsegs,
+        b_or_k: emailToBorK,
+        category: this.state.category,
+        associated_zuban: this.state.zuban
+      })
+    };
+    console.log(requestOptionsPut.body);
+    fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
+      .then(response => response.json())
+      .then(data => console.log(data));
+
     this.setState({show: true})
     this.setState({modalTitle: "Complete"})
-    this.setState({modalBody: "更新された*.tmx ファイルがダウンロードフォルダに保存されました。その上、「メモリ更新」 がトッドに送信されました。"})
+    this.setState({modalBody: "更新した原文・訳文ペアがデータベースに保存されました。その上、「メモリ更新」 がトッドに送信されました。"})
   }
 
   handleClose() {
@@ -983,6 +1102,7 @@ class MergeTmx extends React.Component {
     console.log(this.state.sourceKanji)
     console.log(this.state.targetKanji)
     console.log(this.state.BorK)
+    console.log(this.state.zuban)
 
     return (
       <Container>
@@ -1002,17 +1122,28 @@ class MergeTmx extends React.Component {
           <Form>
             <Form.Group controlId="formFile" className="mb-3">
             <Row style={{ marginTop: 5, marginBottom: 5}}>
-              <Col className="d-grid gap-2">    
+                <Col className="d-grid gap-2">    
 
-
-              <Form.Label style={{ marginTop: 5, marginBottom: 5}}><span style={{ color: 'green', fontWeight: 'bold' }}>更新したい</span>（文章数が多い方）の*.tmx ファイルを選んでください</Form.Label>
+                <Form.Label style={{ marginTop: 5, marginBottom: 5, marginRight: 5}}>カテゴリ選んでください</Form.Label>
                 <br />
-                <Form.Control 
-                  type="file" 
-                  onChange={(e) => {
-                    this.setState({baseFile: e.target.files[0]});
-                    this.setState({baseFileName: e.target.files[0].name})}
-                   } />
+                <select onChange={(e) => {
+                  this.setState({category: e.target.value});
+                }}>
+                    <option value="AirPurifier">空気清浄機</option>
+                    <option value="AirConditionerInstallation">エアコン（据説）</option>
+                    <option value="VrvInstallation">VRV（据説）</option>
+                    <option value="AirConditionerOperation">エアコン（取説）</option>
+                    <option value="DgpfEdge">DGPFエッジ</option>
+                    <option value="OilCon">オイルコン</option>
+                    <option value="Chiller">チラー</option>
+                    <option value="WaterHeater">給湯器</option>
+                    <option value="DecorationPanel">デコレーションパネル</option>
+                    <option value="WiredRemoteController">有線リモコン</option>
+                    <option value="WirelessAdapter">無線アダプター</option>
+                    <option value="SpecManual">仕様書</option>
+                    <option value="InfoPlate">銘版</option>
+                    <option value="SmartphoneApp">アプリ</option>
+                </select>   
                 </Col>
               </Row>
               <Row style={{ marginTop: 5, marginBottom: 5}}>
@@ -1103,21 +1234,25 @@ class MergeTmx extends React.Component {
                   this.setState({sourceCode: e.target.value});
                   this.setState({sourceKanji: e.target.options[e.target.selectedIndex].text})
                 }}>
-                    <option value="en">英語</option>
-                    <option value="fr">フランス語</option>
-                    <option value="es">スペイン語</option>
-                    <option value="ja">日本語</option>
-                    <option value="zh">繁体字</option>
-                    <option value="zh">簡体字</option>
-                    <option value="ko">韓国語</option>
-                    <option value="pt">ポルトガル語</option>
-                    <option value="el">ギリシャ</option>
-                    <option value="nl">オランダ語</option>
-                    <option value="de">ドイツ語</option>
-                    <option value="ru">ロシア語</option>
-                    <option value="it">イタリア語</option>
-                    <option value="pl">ポーランド語</option>
-                    <option value="tr">トルコ語</option>
+                    <option value="en-us">英語(北米)</option>
+                    <option value="en-uk">英語(UK)</option>
+                    <option value="fr-ca">フランス語(カナダ)</option>
+                    <option value="es-mx">スペイン語(メキシコ)</option>
+                    <option value="ja-jp">日本語</option>
+                    <option value="zh-tw">繁体字</option>
+                    <option value="zh-cn">簡体字</option>
+                    <option value="ko-ko">韓国語</option>
+                    <option value="fr-fr">フランス語(ヨーロッパ)</option>
+                    <option value="es-es">スペイン語(ヨーロッパ)</option>
+                    <option value="pt-pt">ポルトガル語(ポルトガル)</option>
+                    <option value="pt-br">ポルトガル語(ブラジル)</option>
+                    <option value="el-el">ギリシャ</option>
+                    <option value="nl-nl">オランダ語</option>
+                    <option value="de-de">ドイツ語</option>
+                    <option value="ru-ru">ロシア語</option>
+                    <option value="it-it">イタリア語</option>
+                    <option value="pl-pl">ポーランド語</option>
+                    <option value="tr-tr">トルコ語</option>
                 </select>
               </Col>
             </Row>
@@ -1131,21 +1266,25 @@ class MergeTmx extends React.Component {
                   this.setState({targetCode: e.target.value});
                   this.setState({targetKanji: e.target.options[e.target.selectedIndex].text})
                 }}>
-                    <option value="en">英語</option>
-                    <option value="fr">フランス語</option>
-                    <option value="es">スペイン語</option>
-                    <option value="ja">日本語</option>
-                    <option value="zh">繁体字</option>
-                    <option value="zh">簡体字</option>
-                    <option value="ko">韓国語</option>
-                    <option value="pt">ポルトガル語</option>
-                    <option value="el">ギリシャ</option>
-                    <option value="nl">オランダ語</option>
-                    <option value="de">ドイツ語</option>
-                    <option value="ru">ロシア語</option>
-                    <option value="it">イタリア語</option>
-                    <option value="pl">ポーランド語</option>
-                    <option value="tr">トルコ語</option>
+                    <option value="en-us">英語(北米)</option>
+                    <option value="en-uk">英語(UK)</option>
+                    <option value="fr-ca">フランス語(カナダ)</option>
+                    <option value="es-mx">スペイン語(メキシコ)</option>
+                    <option value="ja-jp">日本語</option>
+                    <option value="zh-tw">繁体字</option>
+                    <option value="zh-cn">簡体字</option>
+                    <option value="ko-ko">韓国語</option>
+                    <option value="fr-fr">フランス語(ヨーロッパ)</option>
+                    <option value="es-es">スペイン語(ヨーロッパ)</option>
+                    <option value="pt-pt">ポルトガル語(ポルトガル)</option>
+                    <option value="pt-br">ポルトガル語(ブラジル)</option>
+                    <option value="el-el">ギリシャ</option>
+                    <option value="nl-nl">オランダ語</option>
+                    <option value="de-de">ドイツ語</option>
+                    <option value="ru-ru">ロシア語</option>
+                    <option value="it-it">イタリア語</option>
+                    <option value="pl-pl">ポーランド語</option>
+                    <option value="tr-tr">トルコ語</option>
                 </select>   
               </Col>
             </Row>
@@ -1153,6 +1292,228 @@ class MergeTmx extends React.Component {
                 <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
                 <Button style={{ marginTop: 5, marginBottom: 5}} variant="secondary" type="submit" onClick={this.handleSubmit} >
                   更新を行う
+                </Button>
+              </Col>
+            </Row>
+            </Form.Group>
+          </Form>
+      </Container>
+    );
+  }
+}
+
+
+class CreateTmx extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      show: false,
+      modalTitle: "",
+      modalBody: "",
+
+      BorK: '',    
+      sourceCode: "en-us",
+      targetCode: "en-us",
+      category: "AirPurifier"
+    };
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleClose = this.handleClose.bind(this);
+  }
+
+  async handleSubmit(event) {
+    event.preventDefault();
+
+    // get sentences using the getPutSentencesForHotaru endpoint in GCP
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        get_or_put: 'get',
+        source: this.state.sourceCode,
+        target: this.state.targetCode,
+        s_sentence: '',
+        t_sentence: '',
+        b_or_k: this.state.BorK,
+        category: this.state.category,
+        associated_zuban: ''
+      })
+    };
+    console.log(requestOptions.body);
+    fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
+      .then(response => response.json())
+      .then(data => {
+
+        console.log(data);
+        this.setState({segmentArray: data.contents});
+        // download the new tmx file
+        this.handleDownloadClick()
+      });
+
+    this.setState({show: true})
+    this.setState({modalTitle: "Complete"})
+    this.setState({modalBody: "カスタムな*.tmx ファイルがダウンロードフォルダに保存されます。*.sdltm 形式に変換してからトラドスプロジェクトに搭載してください。"})
+  }
+
+  handleDownloadClick() {
+
+    // put the XML back together
+    var finalXml = `<?xml version="1.0" encoding="utf-8"?><tmx version="1.4"><header creationtool="Hotaru_GBChecker" creationtoolversion="6.1" datatype="tmx" segtype="sentence" o-tmf="GlossaryFile" srclang="${this.state.sourceCode}"/><body>`
+    let sa = this.state.segmentArray;
+    for (var i = 0; i < sa.length; i = i + 2) {
+      finalXml = finalXml + `<tu tuid="${i}"><tuv xml:lang="${this.state.sourceCode}"><seg>` + sa[i] + `</seg></tuv><tuv xml:lang="${this.state.targetCode}"><seg>` + sa[i+1] + `</seg></tuv></tu>`
+    };
+    finalXml = finalXml + `</body></tmx>`
+   
+    const element = document.createElement("a");
+    const file = new Blob([finalXml],    
+                {type: 'text/plain;charset=utf-8'});
+    element.href = URL.createObjectURL(file);
+    element.download = this.state.sourceCode + "_to_" + this.state.targetCode + "_" + this.state.category + ".tmx";
+    document.body.appendChild(element);
+    element.click();
+  }
+
+  handleClose() {
+		this.setState({show: false})
+   
+    this.setState({forSearch: ""});
+    this.setState({thisTarget: ""});
+    if (this.state.modalTitle === "Complete") {
+      ReactDOM.render(
+        <React.StrictMode>
+          <CheckOrEdit />
+        </React.StrictMode>,
+        document.getElementById('root')
+      );
+    }
+	}
+
+  render() {
+
+    return (
+      <Container>
+        <Modal show={this.state.show} onHide={this.handleClose}>
+					<Modal.Header closeButton>
+						<Modal.Title>{this.state.modalTitle}</Modal.Title>
+					</Modal.Header>
+						<Modal.Body>
+							{this.state.modalBody}
+						</Modal.Body>
+					<Modal.Footer>
+          <Button variant="secondary" onClick={this.handleClose}>
+						Close
+					</Button>
+					</Modal.Footer>
+				</Modal>
+          <Form>
+            <Form.Group controlId="formFile" className="mb-3">
+
+              <Row style={{ marginTop: 5, marginBottom: 5}}>
+                <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
+                  <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
+                    <Button variant="secondary" onClick={() => {
+                        this.setState({BorK: 'K'})
+                      }}
+                      >金岡案件</Button>
+                    <Button variant="info" onClick={() => {
+                        this.setState({BorK: 'B'})
+                      }}>滋賀案件</Button>
+                  </ButtonGroup>
+                </Col>
+              </Row>
+
+              <Row style={{ marginTop: 5, marginBottom: 5}}>
+                <Col className="d-grid gap-2">    
+
+                <Form.Label style={{ marginTop: 5, marginBottom: 5, marginRight: 5}}>カテゴリ選んでください</Form.Label>
+                <br />
+                <select onChange={(e) => {
+                  this.setState({category: e.target.value});
+                }}>
+                    <option value="AirPurifier">空気清浄機</option>
+                    <option value="AirConditionerInstallation">エアコン（据説）</option>
+                    <option value="VrvInstallation">VRV（据説）</option>
+                    <option value="AirConditionerOperation">エアコン（取説）</option>
+                    <option value="DgpfEdge">DGPFエッジ</option>
+                    <option value="OilCon">オイルコン</option>
+                    <option value="Chiller">チラー</option>
+                    <option value="WaterHeater">給湯器</option>
+                    <option value="DecorationPanel">デコレーションパネル</option>
+                    <option value="WiredRemoteController">有線リモコン</option>
+                    <option value="WirelessAdapter">無線アダプター</option>
+                    <option value="SpecManual">仕様書</option>
+                    <option value="InfoPlate">銘版</option>
+                    <option value="SmartphoneApp">アプリ</option>
+                </select>   
+                </Col>
+              </Row>
+              <Row style={{ marginTop: 5, marginBottom: 5, marginRight: 5}}>
+                <Col className="d-grid gap-2">    
+
+                <Form.Label style={{ marginTop: 5, marginBottom: 5}}>ソース言語を選んでください</Form.Label>
+                <br />
+                <select onChange={(e) => {
+                  this.setState({sourceCode: e.target.value});
+                  this.setState({sourceKanji: e.target.options[e.target.selectedIndex].text})
+                }}>
+                    <option value="en-us">英語(北米)</option>
+                    <option value="en-uk">英語(UK)</option>
+                    <option value="fr-ca">フランス語(カナダ)</option>
+                    <option value="es-mx">スペイン語(メキシコ)</option>
+                    <option value="ja-jp">日本語</option>
+                    <option value="zh-tw">繁体字</option>
+                    <option value="zh-cn">簡体字</option>
+                    <option value="ko-ko">韓国語</option>
+                    <option value="fr-fr">フランス語(ヨーロッパ)</option>
+                    <option value="es-es">スペイン語(ヨーロッパ)</option>
+                    <option value="pt-pt">ポルトガル語(ポルトガル)</option>
+                    <option value="pt-br">ポルトガル語(ブラジル)</option>
+                    <option value="el-el">ギリシャ</option>
+                    <option value="nl-nl">オランダ語</option>
+                    <option value="de-de">ドイツ語</option>
+                    <option value="ru-ru">ロシア語</option>
+                    <option value="it-it">イタリア語</option>
+                    <option value="pl-pl">ポーランド語</option>
+                    <option value="tr-tr">トルコ語</option>
+                </select>
+              </Col>
+            </Row>
+            <Row style={{ marginTop: 5, marginBottom: 5}}>
+                <Col className="d-grid gap-2">    
+
+
+                <Form.Label style={{ marginTop: 5, marginBottom: 5, marginRight: 5}}>ターゲット言語を選んでください</Form.Label>
+                <br />
+                <select onChange={(e) => {
+                  this.setState({targetCode: e.target.value});
+                  this.setState({targetKanji: e.target.options[e.target.selectedIndex].text})
+                }}>
+                    <option value="en-us">英語(北米)</option>
+                    <option value="en-uk">英語(UK)</option>
+                    <option value="fr-ca">フランス語(カナダ)</option>
+                    <option value="es-mx">スペイン語(メキシコ)</option>
+                    <option value="ja-jp">日本語</option>
+                    <option value="zh-tw">繁体字</option>
+                    <option value="zh-cn">簡体字</option>
+                    <option value="ko-ko">韓国語</option>
+                    <option value="fr-fr">フランス語(ヨーロッパ)</option>
+                    <option value="es-es">スペイン語(ヨーロッパ)</option>
+                    <option value="pt-pt">ポルトガル語(ポルトガル)</option>
+                    <option value="pt-br">ポルトガル語(ブラジル)</option>
+                    <option value="el-el">ギリシャ</option>
+                    <option value="nl-nl">オランダ語</option>
+                    <option value="de-de">ドイツ語</option>
+                    <option value="ru-ru">ロシア語</option>
+                    <option value="it-it">イタリア語</option>
+                    <option value="pl-pl">ポーランド語</option>
+                    <option value="tr-tr">トルコ語</option>
+                </select>   
+              </Col>
+            </Row>
+            <Row style={{ marginTop: 5, marginBottom: 5}}>
+                <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
+                <Button style={{ marginTop: 5, marginBottom: 5}} variant="secondary" type="submit" onClick={this.handleSubmit} >
+                  *.tmx ファイルをダウンロード
                 </Button>
               </Col>
             </Row>
