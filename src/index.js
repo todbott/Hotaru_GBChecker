@@ -487,6 +487,8 @@ class UpdateTmx extends React.Component {
       thisTarget: "",
       segmentArray: [],
 
+      segmentArrayForBackendUpdate: [],
+
       numberOfUpdates: 0,
       showSearchArea: false,
       zuban: "",
@@ -514,9 +516,11 @@ class UpdateTmx extends React.Component {
   }
 
   handleUpdateClick() {
-    let sa = this.state.segmentArray;
-    sa[sa.indexOf(this.state.forSearch)+1] = this.state.thisTarget;
-    this.setState({segmentArray: sa})
+    let safbu = this.state.segmentArrayForBackendUpdate;
+    safbu.push(this.state.forSearch)
+    safbu.push(this.state.thisTarget)
+    this.setState({segmentArrayForBackendUpdate: safbu});
+
     this.setState({modalTitle: "更新された"})
     this.setState({modalBody: "このセグメントペアが更新されました"})
     let nu = this.state.numberOfUpdates;
@@ -594,10 +598,10 @@ class UpdateTmx extends React.Component {
 
     let ssegs = []
     let tsegs = []
-    let sa = this.state.segmentArray;
-    for (var s = 0; s < sa.length; s = s + 2) {
-      ssegs.push(sa[s])
-      tsegs.push(sa[s+1])
+    let safbu = this.state.segmentArrayForBackendUpdate;
+    for (var s = 0; s < safbu.length; s = s + 2) {
+      ssegs.push(safbu[s])
+      tsegs.push(safbu[s+1])
     }
 
     const requestOptionsPut = {
@@ -882,6 +886,8 @@ class MergeTmx extends React.Component {
       segmentArray: [],
       baseSegmentArray: [],
 
+      segmentArrayForBackendUpdate: [],
+
       numberOfUpdates: 0,
       numberOfAdditions: 0,
       
@@ -993,42 +999,58 @@ class MergeTmx extends React.Component {
       
     }
 
+    let safbu = this.state.segmentArrayForBackendUpdate;
+
     for (var n=0; n < newSegments.length; n = n + 2) {
 
       let updatedUsingThisNewTarget = false;
+      let skipThisOne = false;
 
       // get the source and target segment from the new TMX file
       let thisNewSource = newSegments[n]
       let thisNewTarget = newSegments[n+1]
 
       // loop through the base file, looking for a source match.
-      // If we find a match, replace the target in the base file
+      // If we find a match where the source is the same but the target is different, 
+      // replace the target in the base file
       for (var b=0; b < baseSegments.length; b = b + 2) {
-        if (baseSegments[b] === thisNewSource) {
+        if ((baseSegments[b] === thisNewSource) && (baseSegments[b+1] !== thisNewTarget)) {
           baseSegments[b+1] = thisNewTarget
           updatedUsingThisNewTarget = true;
+          safbu.push(baseSegments[b])
+          safbu.push(thisNewTarget)
+        } 
+        if ((baseSegments[b] === thisNewSource) && (baseSegments[b+1] === thisNewTarget)) {
+          skipThisOne = true;
         }
       }
 
-      // Now the loop is over.  Did we update a segment? Let's check
-      // by looking at the updatedUsingThisNewTarget boolean
-      if (updatedUsingThisNewTarget === true) {
-        let nu = this.state.numberOfUpdates
-        nu+=1
-        this.setState({numberOfUpdates: nu})
-      } else { // If we didn't update a segment, just add this new source and
-               // new target to the segments and innards to go into the final tmx file
-        baseSegments.push(thisNewSource)
-        baseSegments.push(thisNewTarget)
+      if (skipThisOne === false) {
+        // Now the loop is over.  Did we update a segment? Let's check
+        // by looking at the updatedUsingThisNewTarget boolean
+        if (updatedUsingThisNewTarget === true) {
+          let nu = this.state.numberOfUpdates
+          nu+=1
+          this.setState({numberOfUpdates: nu})
+        } else { // If we didn't update a segment, just add this new source and
+                // new target to the segments and innards to go into the final tmx file
+          baseSegments.push(thisNewSource)
+          baseSegments.push(thisNewTarget)
 
-        // Then increase the number of additions by one
-        let na = this.state.numberOfAdditions
-        na+=1
-        this.setState({numberOfAdditions: na})
+          safbu.push(thisNewSource)
+          safbu.push(thisNewTarget)
+
+          // Then increase the number of additions by one
+          let na = this.state.numberOfAdditions
+          na+=1
+          this.setState({numberOfAdditions: na})
+        }
       }
     }
 
     this.setState({segmentArray: baseSegments})
+    this.setState({segmentArrayForBackendUpdate: safbu})
+    console.log(safbu.length);
 
     // download the new tmx file
     this.handleDownloadClick()
@@ -1065,10 +1087,10 @@ class MergeTmx extends React.Component {
 
     let ssegs = []
     let tsegs = []
-    let sa = this.state.segmentArray;
-    for (var s = 0; s < sa.length; s = s + 2) {
-      ssegs.push(sa[s])
-      tsegs.push(sa[s+1])
+    let safbu = this.state.segmentArrayForBackendUpdate;
+    for (var s = 0; s < safbu.length; s = s + 2) {
+      ssegs.push(safbu[s])
+      tsegs.push(safbu[s+1])
     }
 
     const requestOptionsPut = {
@@ -1387,8 +1409,11 @@ class CreateTmx extends React.Component {
     // put the XML back together
     var finalXml = `<?xml version="1.0" encoding="utf-8"?><tmx version="1.4"><header creationtool="Hotaru_GBChecker" creationtoolversion="6.1" datatype="tmx" segtype="sentence" o-tmf="GlossaryFile" srclang="${this.state.sourceCode}"/><body>`
     let sa = this.state.segmentArray;
+
+    let tuvIndex = 1;
     for (var i = 0; i < sa.length; i = i + 2) {
-      finalXml = finalXml + `<tu tuid="${i}"><tuv xml:lang="${this.state.sourceCode}"><seg>` + sa[i] + `</seg></tuv><tuv xml:lang="${this.state.targetCode}"><seg>` + sa[i+1] + `</seg></tuv></tu>`
+      finalXml = finalXml + `<tu tuid="${tuvIndex}"><tuv xml:lang="${this.state.sourceCode}"><seg>` + sa[i] + `</seg></tuv><tuv xml:lang="${this.state.targetCode}"><seg>` + sa[i+1] + `</seg></tuv></tu>`
+      tuvIndex += 1;
     };
     finalXml = finalXml + `</body></tmx>`
    
