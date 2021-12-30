@@ -529,7 +529,7 @@ class UpdateTmx extends React.Component {
     this.setState({show: true})
   }
 
-  handleSubmit(event) {
+  async handleSubmit(event) {
     event.preventDefault();
 
     // get all sentences using the getPutSentencesForHotaru endpoint in GCP
@@ -554,20 +554,15 @@ class UpdateTmx extends React.Component {
       })
     };
     console.log(requestOptions.body);
-    fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
-      .then(response => response.json())
-      .then(data => {
+    const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
+    const json = await response.json();
 
-        console.log(data);
-        this.setState({segmentArray: data.contents});
-
-      });
-      // -----------------------------------------
-      this.setState({showSearchArea: true})
+    this.setState({segmentArray: json.contents});
+    this.setState({showSearchArea: true})
     
   }
 
-  handleFinishClick() {
+  async handleFinishClick() {
 
     // send a POST request to the backend, triggering an email to everyone about
     // the update
@@ -619,9 +614,8 @@ class UpdateTmx extends React.Component {
       })
     };
     console.log(requestOptionsPut.body);
-    fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
-      .then(response => response.json())
-      .then(data => console.log(data));
+    const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
+    const json = await response.json();
 
     this.setState({show: true})
     this.setState({modalTitle: "Complete"})
@@ -1057,7 +1051,7 @@ class MergeTmx extends React.Component {
          
   }
 
-  handleDownloadClick() {
+  async handleDownloadClick() {
 
     const requestOptions = {
       method: 'POST',
@@ -1108,28 +1102,29 @@ class MergeTmx extends React.Component {
       })
     };
     console.log(requestOptionsPut.body);
-    fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
-      .then(response => response.json())
-      .then(data => console.log(data));
-
-    this.setState({show: true})
-    this.setState({modalTitle: "Complete"})
-    this.setState({modalBody: "更新した原文・訳文ペアがデータベースに保存されました。その上、「メモリ更新」 がトッドに送信されました。"})
+    try {
+      const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
+      const json = await response.json();
+      this.setState({show: true})
+      this.setState({modalTitle: "Complete"})
+      this.setState({modalBody: "更新した原文・訳文ペアがデータベースに保存されました。その上、「メモリ更新」 がトッドに送信されました。"})
+    } catch (e) {
+      this.setState({show: true})
+      this.setState({modalTitle:  `${this.state.fileName}の再更新が必要`})
+      this.setState({modalBody: "1回に約1000原文・訳文ペアをデータベースに保存することができますが、今回のセンテンス数が1000を超えましたので、データベースに保存されなかったペアがあります。もう一回このメモリの更新を行ってください。"})
+    }
   }
 
   handleClose() {
 		this.setState({show: false})
-   
-    this.setState({forSearch: ""});
-    this.setState({thisTarget: ""});
-    if (this.state.modalTitle === "Complete") {
-      ReactDOM.render(
-        <React.StrictMode>
-          <CheckOrEdit />
-        </React.StrictMode>,
-        document.getElementById('root')
-      );
-    }
+    
+    ReactDOM.render(
+      <React.StrictMode>
+        <CheckOrEdit />
+      </React.StrictMode>,
+      document.getElementById('root')
+    );
+    
 	}
 
   render() {
@@ -1389,15 +1384,12 @@ class CreateTmx extends React.Component {
       })
     };
     console.log(requestOptions.body);
-    fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
-      .then(response => response.json())
-      .then(data => {
 
-        console.log(data);
-        this.setState({segmentArray: data.contents});
-        // download the new tmx file
-        this.handleDownloadClick()
-      });
+    const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
+    const json = await response.json();
+
+    this.setState({segmentArray: json.contents});
+    this.handleDownloadClick()
 
     this.setState({show: true})
     this.setState({modalTitle: "Complete"})
