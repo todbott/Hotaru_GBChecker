@@ -1108,40 +1108,59 @@ class MergeTmx extends React.Component {
       emailToBorK = "K"
     }
 
+    // Due to Google Cloud Function Timeouts (9 minutes max), it seems like only about 500
+    // sentence pairs can be added to the database at one time.
+    // Therefore, I'll send all the segments in the segmentArrayForBackendUpdate
+    // to the API endpoint in little 1000-sentence chunks (500 source and 500 target)
+    let safbu = this.state.segmentArrayForBackendUpdate;
+
+    let theseSsegs = []
+    let theseTsegs = []
     let ssegs = []
     let tsegs = []
-    let safbu = this.state.segmentArrayForBackendUpdate;
+    let fhCounter = 0; // five hundred counter
     for (var s = 0; s < safbu.length; s = s + 2) {
-      ssegs.push(safbu[s])
-      tsegs.push(safbu[s+1])
+      theseSsegs.push(safbu[s])
+      theseTsegs.push(safbu[s+1])
+      fhCounter += 1;
+      if (fhCounter > 500) {
+        fhCounter = 0;
+        ssegs.push(theseSsegs)
+        tsegs.push(theseTsegs)
+        theseSsegs = []
+        theseTsegs = []
+      }
     }
 
-    const requestOptionsPut = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        get_or_put: 'put',
-        source: this.state.sourceCode,
-        target: this.state.targetCode,
-        s_sentence: ssegs,
-        t_sentence: tsegs,
-        b_or_k: emailToBorK,
-        category: this.state.category,
-        associated_zuban: this.state.zuban
-      })
-    };
-    console.log(requestOptionsPut.body);
-    try {
+    ssegs.push(theseSsegs)
+    tsegs.push(theseTsegs)
+    
+
+    for (var r = 0; r < ssegs.length; r++) {
+      const requestOptionsPut = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          get_or_put: 'put',
+          source: this.state.sourceCode,
+          target: this.state.targetCode,
+          s_sentence: ssegs[r],
+          t_sentence: tsegs[r],
+          b_or_k: emailToBorK,
+          category: this.state.category,
+          associated_zuban: this.state.zuban
+        })
+      };
+      console.log(requestOptionsPut.body);
+      
       const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
       const json = await response.json();
-      this.setState({show: true})
-      this.setState({modalTitle: "Complete"})
-      this.setState({modalBody: "更新した原文・訳文ペアがデータベースに保存されました。その上、「メモリ更新」 がトッドに送信されました。"})
-    } catch (e) {
-      this.setState({show: true})
-      this.setState({modalTitle:  `${this.state.fileName}の再更新が必要`})
-      this.setState({modalBody: "1回に約1000原文・訳文ペアをデータベースに保存することができますが、今回のセンテンス数が1000を超えましたので、データベースに保存されなかったペアがあります。もう一回このメモリの更新を行ってください。"})
+      console.log(json)
     }
+    this.setState({show: true})
+    this.setState({modalTitle: "Complete"})
+    this.setState({modalBody: "更新した原文・訳文ペアがデータベースに保存されました。その上、「メモリ更新」 がトッドに送信されました。"})
+  
   }
 
   handleClose() {
@@ -1157,12 +1176,6 @@ class MergeTmx extends React.Component {
 	}
 
   render() {
-
-
-    console.log(this.state.sourceKanji)
-    console.log(this.state.targetKanji)
-    console.log(this.state.BorK)
-    console.log(this.state.zuban)
 
     return (
       <Container>
