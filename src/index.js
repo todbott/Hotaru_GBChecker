@@ -497,6 +497,8 @@ class UpdateTmx extends React.Component {
       category: "AirPurifier",
 
       BorK: '',
+      BVariant: 'secondary',
+      KVariant: 'secondary',
 
       sourceKanji: "英語（北米）",
       targetKanji: "英語（北米）"
@@ -554,11 +556,16 @@ class UpdateTmx extends React.Component {
       })
     };
     console.log(requestOptions.body);
-    const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
-    const json = await response.json();
-
-    this.setState({segmentArray: json.contents});
-    this.setState({showSearchArea: true})
+    try {
+      const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
+      const json = await response.json();
+      this.setState({segmentArray: json.contents});
+      this.setState({showSearchArea: true})
+    } catch (e) {
+      this.setState({show: true})
+      this.setState({modalTitle:  '文章ペアが存在していない'})
+      this.setState({modalBody: "選択しました言語ペア・カテゴリ・工場（滋賀か金岡）の文章が存在していないですので、設定を変えてください。"})
+    }
     
   }
 
@@ -744,7 +751,7 @@ class UpdateTmx extends React.Component {
 				        <Col className="d-grid gap-2">     
 
 
-                <Form.Label style={{ marginTop: 5, marginBottom: 5}}>ソース言語を選んでくください</Form.Label>
+                <Form.Label style={{ marginTop: 5, marginBottom: 5}}>ソース言語を選んでください</Form.Label>
                 <br />
                 <select onChange={(e) => {
                   this.setState({sourceCode: e.target.value});
@@ -822,12 +829,16 @@ class UpdateTmx extends React.Component {
             <Row style={{ marginTop: 5, marginBottom: 5}}>
               <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
                 <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
-                  <Button variant="secondary" onClick={() => {
+                  <Button variant={this.state.BVariant} onClick={() => {
                       this.setState({BorK: 'shinpuku@hotaru.ltd'})
+                      this.setState({KVariant: 'secondary'})
+                      this.setState({BVariant: 'info'})
                     }}
                     >金岡案件</Button>
-                  <Button variant="info" onClick={() => {
+                  <Button variant={this.state.KVariant} onClick={() => {
                       this.setState({BorK: 'nishino@hotaru.ltd'})
+                      this.setState({KVariant: 'info'})
+                      this.setState({BVariant: 'secondary'})
                     }}>滋賀案件</Button>
                 </ButtonGroup>
               </Col>
@@ -868,6 +879,12 @@ class MergeTmx extends React.Component {
       goOn: false,
 
       BorK: '',
+      BVariant: 'secondary',
+      KVariant: 'secondary',
+
+      TmxVariant: 'secondary',
+      CopyPasteVariant: 'secondary',
+
       category: 'AirPurifier',
 
       pastedSource: "",
@@ -957,10 +974,16 @@ class MergeTmx extends React.Component {
       })
     };
     console.log(requestOptions.body);
-    const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
-    const json = await response.json();
-    this.setState({baseSegmentArray: json.contents})
-    return json.contents;
+    try {
+      const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
+      const json = await response.json();
+      this.setState({baseSegmentArray: json.contents})
+      return json.contents;
+    } catch (e) {
+      this.setState({show: true})
+      this.setState({modalTitle:  '文章ペアが存在していない'})
+      this.setState({modalBody: "選択しました言語ペア・カテゴリ・工場（滋賀か金岡）の文章が存在していないですので、設定を変えてください。"})
+    }
   }
 
   async handleSubmit(event) {
@@ -993,62 +1016,68 @@ class MergeTmx extends React.Component {
       
     }
 
-    let safbu = this.state.segmentArrayForBackendUpdate;
+    // There's a possibility that we couldn't get the baseSegments from the backend
+    // (probably because the langauge pair/category/factory didn't exist)
+    // so we'll have to skip the whole thing if baseSegments is empty
 
-    for (var n=0; n < newSegments.length; n = n + 2) {
+    if (baseSegments) {
 
-      let updatedUsingThisNewTarget = false;
-      let skipThisOne = false;
+      let safbu = this.state.segmentArrayForBackendUpdate;
 
-      // get the source and target segment from the new TMX file
-      let thisNewSource = newSegments[n]
-      let thisNewTarget = newSegments[n+1]
+      for (var n=0; n < newSegments.length; n = n + 2) {
 
-      // loop through the base file, looking for a source match.
-      // If we find a match where the source is the same but the target is different, 
-      // replace the target in the base file
-      for (var b=0; b < baseSegments.length; b = b + 2) {
-        if ((baseSegments[b] === thisNewSource) && (baseSegments[b+1] !== thisNewTarget)) {
-          baseSegments[b+1] = thisNewTarget
-          updatedUsingThisNewTarget = true;
-          safbu.push(baseSegments[b])
-          safbu.push(thisNewTarget)
-        } 
-        if ((baseSegments[b] === thisNewSource) && (baseSegments[b+1] === thisNewTarget)) {
-          skipThisOne = true;
+        let updatedUsingThisNewTarget = false;
+        let skipThisOne = false;
+
+        // get the source and target segment from the new TMX file
+        let thisNewSource = newSegments[n]
+        let thisNewTarget = newSegments[n+1]
+
+        // loop through the base file, looking for a source match.
+        // If we find a match where the source is the same but the target is different, 
+        // replace the target in the base file
+        for (var b=0; b < baseSegments.length; b = b + 2) {
+          if ((baseSegments[b] === thisNewSource) && (baseSegments[b+1] !== thisNewTarget)) {
+            baseSegments[b+1] = thisNewTarget
+            updatedUsingThisNewTarget = true;
+            safbu.push(baseSegments[b])
+            safbu.push(thisNewTarget)
+          } 
+          if ((baseSegments[b] === thisNewSource) && (baseSegments[b+1] === thisNewTarget)) {
+            skipThisOne = true;
+          }
+        }
+
+        if (skipThisOne === false) {
+          // Now the loop is over.  Did we update a segment? Let's check
+          // by looking at the updatedUsingThisNewTarget boolean
+          if (updatedUsingThisNewTarget === true) {
+            let nu = this.state.numberOfUpdates
+            nu+=1
+            this.setState({numberOfUpdates: nu})
+          } else { // If we didn't update a segment, just add this new source and
+                  // new target to the segments and innards to go into the final tmx file
+            baseSegments.push(thisNewSource)
+            baseSegments.push(thisNewTarget)
+
+            safbu.push(thisNewSource)
+            safbu.push(thisNewTarget)
+
+            // Then increase the number of additions by one
+            let na = this.state.numberOfAdditions
+            na+=1
+            this.setState({numberOfAdditions: na})
+          }
         }
       }
 
-      if (skipThisOne === false) {
-        // Now the loop is over.  Did we update a segment? Let's check
-        // by looking at the updatedUsingThisNewTarget boolean
-        if (updatedUsingThisNewTarget === true) {
-          let nu = this.state.numberOfUpdates
-          nu+=1
-          this.setState({numberOfUpdates: nu})
-        } else { // If we didn't update a segment, just add this new source and
-                // new target to the segments and innards to go into the final tmx file
-          baseSegments.push(thisNewSource)
-          baseSegments.push(thisNewTarget)
+      this.setState({segmentArray: baseSegments})
+      this.setState({segmentArrayForBackendUpdate: safbu})
+      console.log(safbu.length);
 
-          safbu.push(thisNewSource)
-          safbu.push(thisNewTarget)
-
-          // Then increase the number of additions by one
-          let na = this.state.numberOfAdditions
-          na+=1
-          this.setState({numberOfAdditions: na})
-        }
-      }
+      // download the new tmx file
+      this.handleDownloadClick()
     }
-
-    this.setState({segmentArray: baseSegments})
-    this.setState({segmentArrayForBackendUpdate: safbu})
-    console.log(safbu.length);
-
-    // download the new tmx file
-    this.handleDownloadClick()
-         
   }
 
   async handleDownloadClick() {
@@ -1180,16 +1209,20 @@ class MergeTmx extends React.Component {
               <Row style={{ marginTop: 5, marginBottom: 5}}>
                 <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
                   <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="*.tmx かコピペ">
-                    <Button variant="secondary" onClick={() => {
+                    <Button variant={this.state.TmxVariant} onClick={() => {
                         this.setState({updateFromTmx: true})
                         this.setState({goOn: true})
                         this.setState({updateFromCopyPaste: false})
+                        this.setState({TmxVariant: 'info'})
+                        this.setState({CopyPasteVariant: 'secondary'})
                       }}
                       >*.tmx を使って更新する</Button>
-                    <Button variant="info" onClick={() => {
+                    <Button variant={this.state.CopyPasteVariant} onClick={() => {
                         this.setState({updateFromCopyPaste: true})
                         this.setState({goOn: true})
                         this.setState({updateFromTmx: false})
+                        this.setState({TmxVariant: 'secondary'})
+                        this.setState({CopyPasteVariant: 'info'})
                       }}>ブラウザ上に原文訳文コピペで更新する</Button>
                   </ButtonGroup>
                 </Col>
@@ -1197,15 +1230,19 @@ class MergeTmx extends React.Component {
 
               <Row style={{ marginTop: 5, marginBottom: 5}}>
                 <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
-                  <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
-                    <Button variant="secondary" onClick={() => {
-                        this.setState({BorK: 'shinpuku@hotaru.ltd'})
-                      }}
-                      >金岡案件</Button>
-                    <Button variant="info" onClick={() => {
-                        this.setState({BorK: 'nishino@hotaru.ltd'})
-                      }}>滋賀案件</Button>
-                  </ButtonGroup>
+                <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
+                  <Button variant={this.state.BVariant} onClick={() => {
+                      this.setState({BorK: 'shinpuku@hotaru.ltd'})
+                      this.setState({KVariant: 'secondary'})
+                      this.setState({BVariant: 'info'})
+                    }}
+                    >金岡案件</Button>
+                  <Button variant={this.state.KVariant} onClick={() => {
+                      this.setState({BorK: 'nishino@hotaru.ltd'})
+                      this.setState({KVariant: 'info'})
+                      this.setState({BVariant: 'secondary'})
+                    }}>滋賀案件</Button>
+                </ButtonGroup>
                 </Col>
               </Row>
 
@@ -1357,6 +1394,9 @@ class CreateTmx extends React.Component {
       modalBody: "",
 
       BorK: '',    
+      BVariant: 'secondary',
+      KVariant: 'secondary',
+
       sourceCode: "en-us",
       targetCode: "en-us",
       category: "AirPurifier"
@@ -1385,15 +1425,21 @@ class CreateTmx extends React.Component {
     };
     console.log(requestOptions.body);
 
-    const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
-    const json = await response.json();
+    try {
+      const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
+      const json = await response.json();
 
-    this.setState({segmentArray: json.contents});
-    this.handleDownloadClick()
+      this.setState({segmentArray: json.contents});
+      this.handleDownloadClick()
 
-    this.setState({show: true})
-    this.setState({modalTitle: "Complete"})
-    this.setState({modalBody: "カスタムな*.tmx ファイルがダウンロードフォルダに保存されます。*.sdltm 形式に変換してからトラドスプロジェクトに搭載してください。"})
+      this.setState({show: true})
+      this.setState({modalTitle: "Complete"})
+      this.setState({modalBody: "カスタムな*.tmx ファイルがダウンロードフォルダに保存されます。*.sdltm 形式に変換してからトラドスプロジェクトに搭載してください。"})
+    } catch (e) {
+      this.setState({show: true})
+      this.setState({modalTitle:  '文章ペアが存在していない'})
+      this.setState({modalBody: "選択しました言語ペア・カテゴリ・工場（滋賀か金岡）の文章が存在していないですので、設定を変えてください。"})
+    }
   }
 
   handleDownloadClick() {
@@ -1455,15 +1501,19 @@ class CreateTmx extends React.Component {
 
               <Row style={{ marginTop: 5, marginBottom: 5}}>
                 <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
-                  <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
-                    <Button variant="secondary" onClick={() => {
-                        this.setState({BorK: 'K'})
-                      }}
-                      >金岡案件</Button>
-                    <Button variant="info" onClick={() => {
-                        this.setState({BorK: 'B'})
-                      }}>滋賀案件</Button>
-                  </ButtonGroup>
+                <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
+                  <Button variant={this.state.BVariant} onClick={() => {
+                      this.setState({BorK: 'K'})
+                      this.setState({KVariant: 'secondary'})
+                      this.setState({BVariant: 'info'})
+                    }}
+                    >金岡案件</Button>
+                  <Button variant={this.state.KVariant} onClick={() => {
+                      this.setState({BorK: 'B'})
+                      this.setState({KVariant: 'info'})
+                      this.setState({BVariant: 'secondary'})
+                    }}>滋賀案件</Button>
+                </ButtonGroup>
                 </Col>
               </Row>
 
