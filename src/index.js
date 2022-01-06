@@ -1134,10 +1134,13 @@ class MergeTmx extends React.Component {
 
     ssegs.push(theseSsegs)
     tsegs.push(theseTsegs)
+
+    console.log(ssegs)
+    console.log(tsegs)
     
 
     for (var r = 0; r < ssegs.length; r++) {
-      const requestOptionsPut = {
+      let requestOptionsPut = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -1151,11 +1154,7 @@ class MergeTmx extends React.Component {
           associated_zuban: this.state.zuban
         })
       };
-      console.log(requestOptionsPut.body);
-      
-      const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
-      const json = await response.json();
-      console.log(json)
+      fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
     }
     this.setState({show: true})
     this.setState({modalTitle: "Complete"})
