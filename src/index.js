@@ -309,7 +309,7 @@ class CheckOrEdit extends React.Component {
           </Row>
           <Row style={{ marginTop: 50, marginBottom: 5}}>
             <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
-              <h3>メモリ作成</h3>
+              <h3>メモリ作成・点検</h3>
             </Col>
           </Row>  
           <Row style={{ marginTop: 20, marginBottom: 5}}>
@@ -319,7 +319,7 @@ class CheckOrEdit extends React.Component {
           </Row>
           <Row>
 				    <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
-              <Button variant="warning" size="lg" onClick={this.handleCreateClick}>カスタムメモリファイルをダウンロード</Button>
+              <Button variant="warning" size="lg" onClick={this.handleCreateClick}>メモリファイルをダウンロード・表示</Button>
             </Col>
           </Row>
         </Container>
@@ -1405,6 +1405,8 @@ class CreateTmx extends React.Component {
       modalTitle: "",
       modalBody: "",
 
+      showPairs: false,
+
       BorK: '',    
       BVariant: 'secondary',
       KVariant: 'secondary',
@@ -1414,6 +1416,7 @@ class CreateTmx extends React.Component {
       category: "AirPurifier"
     };
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleShowSubmit = this.handleShowSubmit.bind(this);
     this.handleClose = this.handleClose.bind(this);
   }
 
@@ -1454,6 +1457,39 @@ class CreateTmx extends React.Component {
     }
   }
 
+  async handleShowSubmit(event) {
+    event.preventDefault();
+
+    // get sentences using the getPutSentencesForHotaru endpoint in GCP
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        get_or_put: 'get',
+        source: this.state.sourceCode,
+        target: this.state.targetCode,
+        s_sentence: '',
+        t_sentence: '',
+        b_or_k: this.state.BorK,
+        category: this.state.category,
+        associated_zuban: ''
+      })
+    };
+
+    try {
+      const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
+      const json = await response.json();
+
+      this.setState({segmentArray: json.contents});
+      this.setState({showPairs: true})
+
+    } catch (e) {
+      this.setState({show: true})
+      this.setState({modalTitle:  '文章ペアが存在していない'})
+      this.setState({modalBody: "選択しました言語ペア・カテゴリ・工場（滋賀か金岡）の文章が存在していないですので、設定を変えてください。"})
+    }
+  }
+
   handleDownloadClick() {
 
     // put the XML back together
@@ -1475,6 +1511,7 @@ class CreateTmx extends React.Component {
     document.body.appendChild(element);
     element.click();
   }
+
 
   handleClose() {
 		this.setState({show: false})
@@ -1638,12 +1675,44 @@ class CreateTmx extends React.Component {
                 </Button>
               </Col>
             </Row>
+            {(this.state.showPairs) ?
+                (
+                  <ShowPairs pairs={this.state.segmentArray}/>
+                ) : (
+                <Row style={{ marginTop: 5, marginBottom: 5}}>
+                    <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
+                    <Button style={{ marginTop: 5, marginBottom: 5}} variant="info" type="submit" onClick={this.handleShowSubmit} >
+                      ブラウザーで表示します
+                    </Button>
+                  </Col>
+                </Row>
+                )}
             </Form.Group>
           </Form>
       </Container>
     );
   }
 }
+
+
+class ShowPairs extends React.Component {
+
+  render() { 
+
+    const rows = this.props.pairs.reduce(function (rows, key, index) { 
+      return (index % 2 === 0 ? rows.push([key.replaceAll("&lt;", "<").replaceAll("&gt;", ">")]) : rows[rows.length-1].push(key.replaceAll("&lt;", "<").replaceAll("&gt;", ">"))) && rows;
+    }, []);
+
+    
+
+    return (
+      <table style={{borderWidth:"1px", borderStyle:'solid'}}>
+          {rows.map(column => <tr style={{margin: "10px", borderWidth:"1px", borderStyle:'solid'}}><td style={{margin: "10px", borderWidth:"1px", borderStyle:'solid'}}>{column[0]}</td><td style={{margin: "10px", borderWidth:"1px", borderStyle:'solid'}}>{column[1]}</td></tr>)}
+      </table>
+    );
+  }
+}
+
 
 
 
