@@ -10,6 +10,36 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container'
 import Slider from '@material-ui/core/Slider'
+import CircularProgress from "@material-ui/core/CircularProgress";
+
+
+class MySpinner extends React.Component {
+  render() {
+    
+    return (
+      <Modal show="true" style={{ content: {borderRadius: '10px'}}}>
+      <Modal.Body>
+        <Container>
+          <Row style={{margin: 10}}>
+            <Col>
+              <div style={{display: 'flex', justifyContent: 'center'}}>
+                サーバーと接続しています
+              </div>
+            </Col>
+          </Row>
+          <Row style={{margin: 10, padding: 10}}>
+            <Col>
+              <div style={{display: 'flex', justifyContent: 'center'}}>
+                <CircularProgress size={30} />	
+              </div>
+            </Col>
+          </Row>
+        </Container>
+      </Modal.Body>
+    </Modal>
+    )
+  }
+}
 
 
 
@@ -481,8 +511,9 @@ class UpdateTmx extends React.Component {
       show: false,
       modalTitle: "",
       modalBody: "",
+
+      showSpinner: false,
  
-  
       forSearch: "",
       thisTarget: "",
       segmentArray: [],
@@ -533,6 +564,7 @@ class UpdateTmx extends React.Component {
 
   async handleSubmit(event) {
     event.preventDefault();
+    this.setState({showSpinner: true});
 
     // get all sentences using the getPutSentencesForHotaru endpoint in GCP
     let emailToBorK = ""
@@ -561,10 +593,12 @@ class UpdateTmx extends React.Component {
       const json = await response.json();
       this.setState({segmentArray: json.contents});
       this.setState({showSearchArea: true})
+      this.setState({showSpinner: false})
     } catch (e) {
       this.setState({show: true})
       this.setState({modalTitle:  '文章ペアが存在していない'})
       this.setState({modalBody: "選択しました言語ペア・カテゴリ・工場（滋賀か金岡）の文章が存在していないですので、設定を変えてください。"})
+      this.setState({showSpinner: false})
     }
     
   }
@@ -621,8 +655,8 @@ class UpdateTmx extends React.Component {
       })
     };
     console.log(requestOptionsPut.body);
-    const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
-    const json = await response.json();
+    fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
+    
 
     this.setState({show: true})
     this.setState({modalTitle: "Complete"})
@@ -660,6 +694,11 @@ class UpdateTmx extends React.Component {
 					</Button>
 					</Modal.Footer>
 				</Modal>
+        { this.state.showSpinner ? 
+         (
+           <MySpinner />
+         ) : (<></>)
+        }
         { this.state.showSearchArea ? 
          (
         <Container>
@@ -874,6 +913,8 @@ class MergeTmx extends React.Component {
       modalTitle: "",
       modalBody: "",
 
+      showSpinner: false,
+
       updateFromTmx: false,
       updateFromCopyPaste: false,
       goOn: false,
@@ -953,6 +994,7 @@ class MergeTmx extends React.Component {
 
   async getPairsFromBackend() {
     // get sentences using the getPutSentencesForHotaru endpoint in GCP
+    this.setState({showSpinner: true})
     let emailToBorK = ""
     if (this.state.BorK === "nishino@hotaru.ltd") {
       emailToBorK = "B"
@@ -978,8 +1020,10 @@ class MergeTmx extends React.Component {
       const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
       const json = await response.json();
       this.setState({baseSegmentArray: json.contents})
+      this.setState({showSpinner: false})
       return json.contents;
     } catch (e) {
+      this.setState({showSpinner: false})
       this.setState({show: true})
       this.setState({modalTitle:  '文章ペアが存在していない'})
       this.setState({modalBody: "選択しました言語ペア・カテゴリ・工場（滋賀か金岡）の文章が存在していないですので、設定を変えてください。"})
@@ -1191,6 +1235,11 @@ class MergeTmx extends React.Component {
 					</Button>
 					</Modal.Footer>
 				</Modal>
+        { this.state.showSpinner ? 
+         (
+           <MySpinner />
+         ) : (<></>)
+        }
           <Form>
             <Form.Group controlId="formFile" className="mb-3">
             <Row style={{ marginTop: 5, marginBottom: 5}}>
@@ -1405,6 +1454,8 @@ class CreateTmx extends React.Component {
       modalTitle: "",
       modalBody: "",
 
+      showSpinner: false,
+
       showPairs: false,
 
       BorK: '',    
@@ -1422,6 +1473,7 @@ class CreateTmx extends React.Component {
 
   async handleSubmit(event) {
     event.preventDefault();
+    this.setState({showSpinner: true})
 
     // get sentences using the getPutSentencesForHotaru endpoint in GCP
     const requestOptions = {
@@ -1444,6 +1496,7 @@ class CreateTmx extends React.Component {
       const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
       const json = await response.json();
 
+      this.setState({showSpinner: false})
       this.setState({segmentArray: json.contents});
       this.handleDownloadClick()
 
@@ -1451,6 +1504,7 @@ class CreateTmx extends React.Component {
       this.setState({modalTitle: "Complete"})
       this.setState({modalBody: "カスタムな*.tmx ファイルがダウンロードフォルダに保存されます。*.sdltm 形式に変換してからトラドスプロジェクトに搭載してください。"})
     } catch (e) {
+      this.setState({showSpinner: false})
       this.setState({show: true})
       this.setState({modalTitle:  '文章ペアが存在していない'})
       this.setState({modalBody: "選択しました言語ペア・カテゴリ・工場（滋賀か金岡）の文章が存在していないですので、設定を変えてください。"})
@@ -1459,7 +1513,7 @@ class CreateTmx extends React.Component {
 
   async handleShowSubmit(event) {
     event.preventDefault();
-
+    this.setState({showSpinner: true})
     // get sentences using the getPutSentencesForHotaru endpoint in GCP
     const requestOptions = {
       method: 'POST',
@@ -1479,11 +1533,12 @@ class CreateTmx extends React.Component {
     try {
       const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
       const json = await response.json();
-
+      this.setState({showSpinner: false})
       this.setState({segmentArray: json.contents});
       this.setState({showPairs: true})
 
     } catch (e) {
+      this.setState({showSpinner: false})
       this.setState({show: true})
       this.setState({modalTitle:  '文章ペアが存在していない'})
       this.setState({modalBody: "選択しました言語ペア・カテゴリ・工場（滋賀か金岡）の文章が存在していないですので、設定を変えてください。"})
@@ -1530,6 +1585,8 @@ class CreateTmx extends React.Component {
 
   render() {
 
+    console.log(this.state.showSpinner)
+
     return (
       <Container>
         <Modal show={this.state.show} onHide={this.handleClose}>
@@ -1545,6 +1602,11 @@ class CreateTmx extends React.Component {
 					</Button>
 					</Modal.Footer>
 				</Modal>
+        { this.state.showSpinner ? 
+         (
+           <MySpinner />
+         ) : (<></>)
+        }
           <Form>
             <Form.Group controlId="formFile" className="mb-3">
 
