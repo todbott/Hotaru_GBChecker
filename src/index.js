@@ -530,6 +530,7 @@ class UpdateTmx extends React.Component {
       BorK: '',
       BVariant: 'secondary',
       KVariant: 'secondary',
+      LVariant: 'secondary',
 
       sourceKanji: "英語（北米）",
       targetKanji: "英語（北米）"
@@ -570,8 +571,10 @@ class UpdateTmx extends React.Component {
     let emailToBorK = ""
     if (this.state.BorK === "nishino@hotaru.ltd") {
       emailToBorK = "B"
-    } else {
+    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
       emailToBorK = "K"
+    } else if (this.state.BorK === "kotera@hotaru.ltd") {
+      emailToBorK = "L"
     }
     const requestOptions = {
       method: 'POST',
@@ -628,8 +631,10 @@ class UpdateTmx extends React.Component {
     let emailToBorK = ""
     if (this.state.BorK === "nishino@hotaru.ltd") {
       emailToBorK = "B"
-    } else {
+    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
       emailToBorK = "K"
+    } else if (this.state.BorK === "kotera@hotaru.ltd") {
+      emailToBorK = "L"
     }
 
     let ssegs = []
@@ -772,6 +777,7 @@ class UpdateTmx extends React.Component {
                     <option value="SpecManual">仕様書</option>
                     <option value="InfoPlate">銘版</option>
                     <option value="SmartphoneApp">アプリ</option>
+                    <option value="LogosCatalog">ロゴスのカタログ</option>
                 </select>   
                 </Col>
               </Row>
@@ -868,17 +874,25 @@ class UpdateTmx extends React.Component {
             <Row style={{ marginTop: 5, marginBottom: 5}}>
               <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
                 <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
-                  <Button variant={this.state.BVariant} onClick={() => {
+                <Button variant={this.state.BVariant} onClick={() => {
                       this.setState({BorK: 'shinpuku@hotaru.ltd'})
+                      this.setState({LVariant: 'secondary'})
                       this.setState({KVariant: 'secondary'})
                       this.setState({BVariant: 'info'})
                     }}
                     >金岡案件</Button>
                   <Button variant={this.state.KVariant} onClick={() => {
                       this.setState({BorK: 'nishino@hotaru.ltd'})
+                      this.setState({LVariant: 'secondary'})
                       this.setState({KVariant: 'info'})
                       this.setState({BVariant: 'secondary'})
                     }}>滋賀案件</Button>
+                    <Button variant={this.state.LVariant} onClick={() => {
+                      this.setState({BorK: 'kotera@hotaru.ltd'})
+                      this.setState({LVariant: 'info'})
+                      this.setState({KVariant: 'secondary'})
+                      this.setState({BVariant: 'secondary'})
+                    }}>ロゴス案件</Button>
                 </ButtonGroup>
               </Col>
             </Row>
@@ -922,6 +936,7 @@ class MergeTmx extends React.Component {
       BorK: '',
       BVariant: 'secondary',
       KVariant: 'secondary',
+      LVariant: 'secondary',
 
       TmxVariant: 'secondary',
       CopyPasteVariant: 'secondary',
@@ -998,8 +1013,10 @@ class MergeTmx extends React.Component {
     let emailToBorK = ""
     if (this.state.BorK === "nishino@hotaru.ltd") {
       emailToBorK = "B"
-    } else {
+    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
       emailToBorK = "K"
+    } else if (this.state.BorK === "kotera@hotaru.ltd") {
+      emailToBorK = "L"
     }
     const requestOptions = {
       method: 'POST',
@@ -1148,8 +1165,10 @@ class MergeTmx extends React.Component {
     let emailToBorK = ""
     if (this.state.BorK === "nishino@hotaru.ltd") {
       emailToBorK = "B"
-    } else {
+    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
       emailToBorK = "K"
+    } else if (this.state.BorK === "kotera@hotaru.ltd") {
+      emailToBorK = "L"
     }
 
     // Due to Google Cloud Function Timeouts (9 minutes max), it seems like only about 500
@@ -1264,6 +1283,7 @@ class MergeTmx extends React.Component {
                     <option value="SpecManual">仕様書</option>
                     <option value="InfoPlate">銘版</option>
                     <option value="SmartphoneApp">アプリ</option>
+                    <option value="LogosCatalog">ロゴスのカタログ</option>
                 </select>   
                 </Col>
               </Row>
@@ -1294,15 +1314,23 @@ class MergeTmx extends React.Component {
                 <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
                   <Button variant={this.state.BVariant} onClick={() => {
                       this.setState({BorK: 'shinpuku@hotaru.ltd'})
+                      this.setState({LVariant: 'secondary'})
                       this.setState({KVariant: 'secondary'})
                       this.setState({BVariant: 'info'})
                     }}
                     >金岡案件</Button>
                   <Button variant={this.state.KVariant} onClick={() => {
                       this.setState({BorK: 'nishino@hotaru.ltd'})
+                      this.setState({LVariant: 'secondary'})
                       this.setState({KVariant: 'info'})
                       this.setState({BVariant: 'secondary'})
                     }}>滋賀案件</Button>
+                    <Button variant={this.state.LVariant} onClick={() => {
+                      this.setState({BorK: 'kotera@hotaru.ltd'})
+                      this.setState({LVariant: 'info'})
+                      this.setState({KVariant: 'secondary'})
+                      this.setState({BVariant: 'secondary'})
+                    }}>ロゴス案件</Button>
                 </ButtonGroup>
                 </Col>
               </Row>
@@ -1461,6 +1489,7 @@ class CreateTmx extends React.Component {
       BorK: '',    
       BVariant: 'secondary',
       KVariant: 'secondary',
+      LVariant: 'secondary',
 
       sourceCode: "en-us",
       targetCode: "en-us",
@@ -1475,6 +1504,14 @@ class CreateTmx extends React.Component {
     event.preventDefault();
     this.setState({showSpinner: true})
 
+    let emailToBorK = ""
+    if (this.state.BorK === "nishino@hotaru.ltd") {
+      emailToBorK = "B"
+    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
+      emailToBorK = "K"
+    } else if (this.state.BorK === "kotera@hotaru.ltd") {
+      emailToBorK = "L"
+    }
     // get sentences using the getPutSentencesForHotaru endpoint in GCP
     const requestOptions = {
       method: 'POST',
@@ -1485,7 +1522,7 @@ class CreateTmx extends React.Component {
         target: this.state.targetCode,
         s_sentence: '',
         t_sentence: '',
-        b_or_k: this.state.BorK,
+        b_or_k: emailToBorK,
         category: this.state.category,
         associated_zuban: ''
       })
@@ -1514,6 +1551,15 @@ class CreateTmx extends React.Component {
   async handleShowSubmit(event) {
     event.preventDefault();
     this.setState({showSpinner: true})
+
+    let emailToBorK = ""
+    if (this.state.BorK === "nishino@hotaru.ltd") {
+      emailToBorK = "B"
+    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
+      emailToBorK = "K"
+    } else if (this.state.BorK === "kotera@hotaru.ltd") {
+      emailToBorK = "L"
+    }
     // get sentences using the getPutSentencesForHotaru endpoint in GCP
     const requestOptions = {
       method: 'POST',
@@ -1524,11 +1570,12 @@ class CreateTmx extends React.Component {
         target: this.state.targetCode,
         s_sentence: '',
         t_sentence: '',
-        b_or_k: this.state.BorK,
+        b_or_k: emailToBorK,
         category: this.state.category,
         associated_zuban: ''
       })
     };
+    console.log(requestOptions.body)
 
     try {
       const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
@@ -1613,17 +1660,25 @@ class CreateTmx extends React.Component {
               <Row style={{ marginTop: 5, marginBottom: 5}}>
                 <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
                 <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
-                  <Button variant={this.state.BVariant} onClick={() => {
-                      this.setState({BorK: 'K'})
+                <Button variant={this.state.BVariant} onClick={() => {
+                      this.setState({BorK: 'shinpuku@hotaru.ltd'})
+                      this.setState({LVariant: 'secondary'})
                       this.setState({KVariant: 'secondary'})
                       this.setState({BVariant: 'info'})
                     }}
                     >金岡案件</Button>
                   <Button variant={this.state.KVariant} onClick={() => {
-                      this.setState({BorK: 'B'})
+                      this.setState({BorK: 'nishino@hotaru.ltd'})
+                      this.setState({LVariant: 'secondary'})
                       this.setState({KVariant: 'info'})
                       this.setState({BVariant: 'secondary'})
                     }}>滋賀案件</Button>
+                    <Button variant={this.state.LVariant} onClick={() => {
+                      this.setState({BorK: 'kotera@hotaru.ltd'})
+                      this.setState({LVariant: 'info'})
+                      this.setState({KVariant: 'secondary'})
+                      this.setState({BVariant: 'secondary'})
+                    }}>ロゴス案件</Button>
                 </ButtonGroup>
                 </Col>
               </Row>
@@ -1650,6 +1705,7 @@ class CreateTmx extends React.Component {
                     <option value="SpecManual">仕様書</option>
                     <option value="InfoPlate">銘版</option>
                     <option value="SmartphoneApp">アプリ</option>
+                    <option value="LogosCatalog">ロゴスのカタログ</option>
                 </select>   
                 </Col>
               </Row>
