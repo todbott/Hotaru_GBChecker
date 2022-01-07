@@ -387,7 +387,7 @@ class GetTmx extends React.Component {
       var xml = new XMLParser().parseFromString(text);    
       var allTuvs = xml.getElementsByTagName('tuv');
       for (var t = 0; t < allTuvs.length; t++) {
-        if (allTuvs[t].attributes['xml:lang'].indexOf(this.state.sourceCode) > -1) {
+        if (allTuvs[t].attributes['xml:lang'].indexOf(this.state.sourceCode.split("-")[0]) > -1) {
           oneForReturn.push(allTuvs[t].getElementsByTagName('seg')[0].value)
         } else {
           oneForReturn.push(allTuvs[t].getElementsByTagName('seg')[0].value)
@@ -977,7 +977,7 @@ class MergeTmx extends React.Component {
       var xml = new XMLParser().parseFromString(contents);    
       var allTuvs = xml.getElementsByTagName('tuv');
       for (var t = 0; t < allTuvs.length; t++) {
-        if (allTuvs[t].attributes['xml:lang'].indexOf(this.state.sourceCode) > -1) {
+        if (allTuvs[t].attributes['xml:lang'].indexOf(this.state.sourceCode.split("-")[0]) > -1) {
           allSegments.push(allTuvs[t].getElementsByTagName('seg')[0].value)
         } else {
           allSegments.push(allTuvs[t].getElementsByTagName('seg')[0].value)
