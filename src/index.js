@@ -528,9 +528,16 @@ class UpdateTmx extends React.Component {
       category: "AirPurifier",
 
       BorK: '',
-      BVariant: 'secondary',
-      KVariant: 'secondary',
-      LVariant: 'secondary',
+      customerCategory: '',
+      BiwakoVariant: 'secondary',
+      KanaokaVariant: 'secondary',
+      DaikinGeneralVariant: 'secondary',
+      LogosVariant: 'secondary',
+      HyodVariant: 'secondary',
+      OkKizaiVariant: 'secondary',
+      HotaruThaiVariant: 'secondary',
+      ToliVariant: 'secondary',
+      
 
       sourceKanji: "英語（北米）",
       targetKanji: "英語（北米）"
@@ -568,14 +575,6 @@ class UpdateTmx extends React.Component {
     this.setState({showSpinner: true});
 
     // get all sentences using the getPutSentencesForHotaru endpoint in GCP
-    let emailToBorK = ""
-    if (this.state.BorK === "nishino@hotaru.ltd") {
-      emailToBorK = "B"
-    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
-      emailToBorK = "K"
-    } else if (this.state.BorK === "kotera@hotaru.ltd") {
-      emailToBorK = "L"
-    }
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -585,7 +584,7 @@ class UpdateTmx extends React.Component {
         target: this.state.targetCode,
         s_sentence: '',
         t_sentence: '',
-        b_or_k: emailToBorK,
+        b_or_k: this.state.customerCategory,
         category: this.state.category,
         associated_zuban: ''
       })
@@ -628,14 +627,6 @@ class UpdateTmx extends React.Component {
       .then(data => console.log(data));
 
     // Then, update the actual segments by sending them to the backend
-    let emailToBorK = ""
-    if (this.state.BorK === "nishino@hotaru.ltd") {
-      emailToBorK = "B"
-    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
-      emailToBorK = "K"
-    } else if (this.state.BorK === "kotera@hotaru.ltd") {
-      emailToBorK = "L"
-    }
 
     let ssegs = []
     let tsegs = []
@@ -654,7 +645,7 @@ class UpdateTmx extends React.Component {
         target: this.state.targetCode,
         s_sentence: ssegs,
         t_sentence: tsegs,
-        b_or_k: emailToBorK,
+        b_or_k: this.state.customerCategory,
         category: this.state.category,
         associated_zuban: ''
       })
@@ -778,6 +769,10 @@ class UpdateTmx extends React.Component {
                     <option value="InfoPlate">銘版</option>
                     <option value="SmartphoneApp">アプリ</option>
                     <option value="LogosCatalog">ロゴスのカタログ</option>
+                    <option value="ToliCatalog">東リのカタログ</option>
+                    <option value="InfoPlate">銘版</option>
+                    <option value="AirBoost">エア・ブースト（HYOD)</option>
+                    <option value="Accessories">別売品</option>
                 </select>   
                 </Col>
               </Row>
@@ -828,6 +823,7 @@ class UpdateTmx extends React.Component {
                     <option value="it-it">イタリア語</option>
                     <option value="pl-pl">ポーランド語</option>
                     <option value="tr-tr">トルコ語</option>
+                    <option value="ar-ar">アラビア語</option>
                 </select>
               </Col>
               </Row>
@@ -867,32 +863,111 @@ class UpdateTmx extends React.Component {
                     <option value="it-it">イタリア語</option>
                     <option value="pl-pl">ポーランド語</option>
                     <option value="tr-tr">トルコ語</option>
+                    <option value="ar-ar">アラビア語</option>
                 </select>   
               </Col>
             </Row>
 
             <Row style={{ marginTop: 5, marginBottom: 5}}>
               <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
-                <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
-                <Button variant={this.state.BVariant} onClick={() => {
+                <ButtonGroup style={{ marginTop: 10, marginBottom: 10}}>
+                <Button variant={this.state.BiwakoVariant} onClick={() => {
                       this.setState({BorK: 'shinpuku@hotaru.ltd'})
-                      this.setState({LVariant: 'secondary'})
-                      this.setState({KVariant: 'secondary'})
-                      this.setState({BVariant: 'info'})
+                      this.setState({customerCategory: 'K'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'info'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
                     }}
                     >金岡案件</Button>
-                  <Button variant={this.state.KVariant} onClick={() => {
+                    <Button variant={this.state.KanaokaVariant} onClick={() => {
                       this.setState({BorK: 'nishino@hotaru.ltd'})
-                      this.setState({LVariant: 'secondary'})
-                      this.setState({KVariant: 'info'})
-                      this.setState({BVariant: 'secondary'})
+                      this.setState({customerCategory: 'B'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'info'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
                     }}>滋賀案件</Button>
-                    <Button variant={this.state.LVariant} onClick={() => {
+                    <Button variant={this.state.DaikinGeneralVariant} onClick={() => {
+                      this.setState({BorK: 'gillies@hotaru.ltd'})
+                      this.setState({customerCategory: 'DaikinGeneral'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'info'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>ダイキン一般案件</Button>
+                    <Button variant={this.state.LogosVariant} onClick={() => {
                       this.setState({BorK: 'kotera@hotaru.ltd'})
-                      this.setState({LVariant: 'info'})
-                      this.setState({KVariant: 'secondary'})
-                      this.setState({BVariant: 'secondary'})
+                      this.setState({customerCategory: 'L'})
+                      this.setState({LogosVariant: 'info'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
                     }}>ロゴス案件</Button>
+                    <Button variant={this.state.HotaruThaiVariant} onClick={() => {
+                      this.setState({BorK: 'tanaka@hotaru.ltd'})
+                      this.setState({customerCategory: 'HotaruThai'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'info'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>ホタルタイ案件</Button>
+                    <Button variant={this.state.HyodVariant} onClick={() => {
+                      this.setState({BorK: 'kotera@hotaru.ltd'})
+                      this.setState({customerCategory: 'Hyod'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'info'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>HYOD 案件</Button>
+                    <Button variant={this.state.OkKizaiVariant} onClick={() => {
+                      this.setState({BorK: 'shinpuku@hotaru.ltd'})
+                      this.setState({customerCategory: 'OkKizai'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'info'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>オーケー器材案件</Button>
+                    <Button variant={this.state.ToliVariant} onClick={() => {
+                      this.setState({BorK: 'kotera@hotaru.ltd'})
+                      this.setState({customerCategory: 'Toli'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'info'})
+                    }}>東リ案件</Button>
                 </ButtonGroup>
               </Col>
             </Row>
@@ -934,9 +1009,15 @@ class MergeTmx extends React.Component {
       goOn: false,
 
       BorK: '',
-      BVariant: 'secondary',
-      KVariant: 'secondary',
-      LVariant: 'secondary',
+      customerCategory: '',
+      BiwakoVariant: 'secondary',
+      KanaokaVariant: 'secondary',
+      DaikinGeneralVariant: 'secondary',
+      LogosVariant: 'secondary',
+      HyodVariant: 'secondary',
+      OkKizaiVariant: 'secondary',
+      HotaruThaiVariant: 'secondary',
+      ToliVariant: 'secondary',
 
       TmxVariant: 'secondary',
       CopyPasteVariant: 'secondary',
@@ -1013,14 +1094,7 @@ class MergeTmx extends React.Component {
   async getPairsFromBackend() {
     // get sentences using the getPutSentencesForHotaru endpoint in GCP
     this.setState({showSpinner: true})
-    let emailToBorK = ""
-    if (this.state.BorK === "nishino@hotaru.ltd") {
-      emailToBorK = "B"
-    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
-      emailToBorK = "K"
-    } else if (this.state.BorK === "kotera@hotaru.ltd") {
-      emailToBorK = "L"
-    }
+    
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1030,7 +1104,7 @@ class MergeTmx extends React.Component {
         target: this.state.targetCode,
         s_sentence: '',
         t_sentence: '',
-        b_or_k: emailToBorK,
+        b_or_k: this.state.customerCategory,
         category: this.state.category,
         associated_zuban: ''
       })
@@ -1176,15 +1250,6 @@ class MergeTmx extends React.Component {
       .then(data => console.log(data));
 
     // Then, update the actual segments by sending them to the backend
-    let emailToBorK = ""
-    if (this.state.BorK === "nishino@hotaru.ltd") {
-      emailToBorK = "B"
-    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
-      emailToBorK = "K"
-    } else if (this.state.BorK === "kotera@hotaru.ltd") {
-      emailToBorK = "L"
-    }
-
     // Due to Google Cloud Function Timeouts (9 minutes max), it seems like only about 500
     // sentence pairs can be added to the database at one time.
     // Therefore, I'll send all the segments in the segmentArrayForBackendUpdate
@@ -1226,7 +1291,7 @@ class MergeTmx extends React.Component {
           target: this.state.targetCode,
           s_sentence: ssegs[r],
           t_sentence: tsegs[r],
-          b_or_k: emailToBorK,
+          b_or_k: this.state.customerCategory,
           category: this.state.category,
           associated_zuban: this.state.zuban
         })
@@ -1298,6 +1363,10 @@ class MergeTmx extends React.Component {
                     <option value="InfoPlate">銘版</option>
                     <option value="SmartphoneApp">アプリ</option>
                     <option value="LogosCatalog">ロゴスのカタログ</option>
+                    <option value="ToliCatalog">東リのカタログ</option>
+                    <option value="InfoPlate">銘版</option>
+                    <option value="AirBoost">エア・ブースト（HYOD)</option>
+                    <option value="Accessories">別売品</option>
                 </select>   
                 </Col>
               </Row>
@@ -1326,25 +1395,103 @@ class MergeTmx extends React.Component {
               <Row style={{ marginTop: 5, marginBottom: 5}}>
                 <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
                 <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
-                  <Button variant={this.state.BVariant} onClick={() => {
+                <Button variant={this.state.BiwakoVariant} onClick={() => {
                       this.setState({BorK: 'shinpuku@hotaru.ltd'})
-                      this.setState({LVariant: 'secondary'})
-                      this.setState({KVariant: 'secondary'})
-                      this.setState({BVariant: 'info'})
+                      this.setState({customerCategory: 'K'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'info'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
                     }}
                     >金岡案件</Button>
-                  <Button variant={this.state.KVariant} onClick={() => {
+                    <Button variant={this.state.KanaokaVariant} onClick={() => {
                       this.setState({BorK: 'nishino@hotaru.ltd'})
-                      this.setState({LVariant: 'secondary'})
-                      this.setState({KVariant: 'info'})
-                      this.setState({BVariant: 'secondary'})
+                      this.setState({customerCategory: 'B'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'info'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
                     }}>滋賀案件</Button>
-                    <Button variant={this.state.LVariant} onClick={() => {
+                    <Button variant={this.state.DaikinGeneralVariant} onClick={() => {
+                      this.setState({BorK: 'gillies@hotaru.ltd'})
+                      this.setState({customerCategory: 'DaikinGeneral'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'info'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>ダイキン一般案件</Button>
+                    <Button variant={this.state.LogosVariant} onClick={() => {
                       this.setState({BorK: 'kotera@hotaru.ltd'})
-                      this.setState({LVariant: 'info'})
-                      this.setState({KVariant: 'secondary'})
-                      this.setState({BVariant: 'secondary'})
+                      this.setState({customerCategory: 'L'})
+                      this.setState({LogosVariant: 'info'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
                     }}>ロゴス案件</Button>
+                    <Button variant={this.state.HotaruThaiVariant} onClick={() => {
+                      this.setState({BorK: 'tanaka@hotaru.ltd'})
+                      this.setState({customerCategory: 'HotaruThai'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'info'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>ホタルタイ案件</Button>
+                    <Button variant={this.state.HyodVariant} onClick={() => {
+                      this.setState({BorK: 'kotera@hotaru.ltd'})
+                      this.setState({customerCategory: 'Hyod'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'info'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>HYOD 案件</Button>
+                    <Button variant={this.state.OkKizaiVariant} onClick={() => {
+                      this.setState({BorK: 'shinpuku@hotaru.ltd'})
+                      this.setState({customerCategory: 'OkKizai'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'info'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>オーケー器材案件</Button>
+                    <Button variant={this.state.ToliVariant} onClick={() => {
+                      this.setState({BorK: 'kotera@hotaru.ltd'})
+                      this.setState({customerCategory: 'Toli'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'info'})
+                    }}>東リ案件</Button>
                 </ButtonGroup>
                 </Col>
               </Row>
@@ -1438,6 +1585,7 @@ class MergeTmx extends React.Component {
                     <option value="it-it">イタリア語</option>
                     <option value="pl-pl">ポーランド語</option>
                     <option value="tr-tr">トルコ語</option>
+                    <option value="ar-ar">アラビア語</option>
                 </select>
               </Col>
             </Row>
@@ -1477,6 +1625,7 @@ class MergeTmx extends React.Component {
                     <option value="it-it">イタリア語</option>
                     <option value="pl-pl">ポーランド語</option>
                     <option value="tr-tr">トルコ語</option>
+                    <option value="ar-ar">アラビア語</option>
                 </select>   
               </Col>
             </Row>
@@ -1508,9 +1657,15 @@ class CreateTmx extends React.Component {
       showPairs: false,
 
       BorK: '',    
-      BVariant: 'secondary',
-      KVariant: 'secondary',
-      LVariant: 'secondary',
+      customerCategory: '',
+      BiwakoVariant: 'secondary',
+      KanaokaVariant: 'secondary',
+      DaikinGeneralVariant: 'secondary',
+      LogosVariant: 'secondary',
+      HyodVariant: 'secondary',
+      OkKizaiVariant: 'secondary',
+      HotaruThaiVariant: 'secondary',
+      ToliVariant: 'secondary',
 
       sourceCode: "en-us",
       targetCode: "en-us",
@@ -1525,14 +1680,6 @@ class CreateTmx extends React.Component {
     event.preventDefault();
     this.setState({showSpinner: true})
 
-    let emailToBorK = ""
-    if (this.state.BorK === "nishino@hotaru.ltd") {
-      emailToBorK = "B"
-    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
-      emailToBorK = "K"
-    } else if (this.state.BorK === "kotera@hotaru.ltd") {
-      emailToBorK = "L"
-    }
     // get sentences using the getPutSentencesForHotaru endpoint in GCP
     const requestOptions = {
       method: 'POST',
@@ -1543,7 +1690,7 @@ class CreateTmx extends React.Component {
         target: this.state.targetCode,
         s_sentence: '',
         t_sentence: '',
-        b_or_k: emailToBorK,
+        b_or_k: this.state.customerCategory,
         category: this.state.category,
         associated_zuban: ''
       })
@@ -1573,14 +1720,6 @@ class CreateTmx extends React.Component {
     event.preventDefault();
     this.setState({showSpinner: true})
 
-    let emailToBorK = ""
-    if (this.state.BorK === "nishino@hotaru.ltd") {
-      emailToBorK = "B"
-    } else if (this.state.BorK === "shinpuku@hotaru.ltd") {
-      emailToBorK = "K"
-    } else if (this.state.BorK === "kotera@hotaru.ltd") {
-      emailToBorK = "L"
-    }
     // get sentences using the getPutSentencesForHotaru endpoint in GCP
     const requestOptions = {
       method: 'POST',
@@ -1591,7 +1730,7 @@ class CreateTmx extends React.Component {
         target: this.state.targetCode,
         s_sentence: '',
         t_sentence: '',
-        b_or_k: emailToBorK,
+        b_or_k: this.state.customerCategory,
         category: this.state.category,
         associated_zuban: ''
       })
@@ -1681,25 +1820,103 @@ class CreateTmx extends React.Component {
               <Row style={{ marginTop: 5, marginBottom: 5}}>
                 <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
                 <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
-                <Button variant={this.state.BVariant} onClick={() => {
+                <Button variant={this.state.BiwakoVariant} onClick={() => {
                       this.setState({BorK: 'shinpuku@hotaru.ltd'})
-                      this.setState({LVariant: 'secondary'})
-                      this.setState({KVariant: 'secondary'})
-                      this.setState({BVariant: 'info'})
+                      this.setState({customerCategory: 'K'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'info'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
                     }}
                     >金岡案件</Button>
-                  <Button variant={this.state.KVariant} onClick={() => {
+                    <Button variant={this.state.KanaokaVariant} onClick={() => {
                       this.setState({BorK: 'nishino@hotaru.ltd'})
-                      this.setState({LVariant: 'secondary'})
-                      this.setState({KVariant: 'info'})
-                      this.setState({BVariant: 'secondary'})
+                      this.setState({customerCategory: 'B'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'info'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
                     }}>滋賀案件</Button>
-                    <Button variant={this.state.LVariant} onClick={() => {
+                    <Button variant={this.state.DaikinGeneralVariant} onClick={() => {
+                      this.setState({BorK: 'gillies@hotaru.ltd'})
+                      this.setState({customerCategory: 'DaikinGeneral'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'info'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>ダイキン一般案件</Button>
+                    <Button variant={this.state.LogosVariant} onClick={() => {
                       this.setState({BorK: 'kotera@hotaru.ltd'})
-                      this.setState({LVariant: 'info'})
-                      this.setState({KVariant: 'secondary'})
-                      this.setState({BVariant: 'secondary'})
+                      this.setState({customerCategory: 'L'})
+                      this.setState({LogosVariant: 'info'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
                     }}>ロゴス案件</Button>
+                    <Button variant={this.state.HotaruThaiVariant} onClick={() => {
+                      this.setState({BorK: 'tanaka@hotaru.ltd'})
+                      this.setState({customerCategory: 'HotaruThai'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'info'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>ホタルタイ案件</Button>
+                    <Button variant={this.state.HyodVariant} onClick={() => {
+                      this.setState({BorK: 'kotera@hotaru.ltd'})
+                      this.setState({customerCategory: 'Hyod'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'info'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>HYOD 案件</Button>
+                    <Button variant={this.state.OkKizaiVariant} onClick={() => {
+                      this.setState({BorK: 'shinpuku@hotaru.ltd'})
+                      this.setState({customerCategory: 'OkKizai'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'info'})
+                      this.setState({ToliVariant: 'secondary'})
+                    }}>オーケー器材案件</Button>
+                    <Button variant={this.state.ToliVariant} onClick={() => {
+                      this.setState({BorK: 'kotera@hotaru.ltd'})
+                      this.setState({customerCategory: 'Toli'})
+                      this.setState({LogosVariant: 'secondary'})
+                      this.setState({KanaokaVariant: 'secondary'})
+                      this.setState({BiwakoVariant: 'secondary'})
+                      this.setState({DaikinGeneralVariant: 'secondary'})
+                      this.setState({HotaruThaiVariant: 'secondary'})
+                      this.setState({HyodVariant: 'secondary'})
+                      this.setState({OkKizaiVariant: 'secondary'})
+                      this.setState({ToliVariant: 'info'})
+                    }}>東リ案件</Button>
                 </ButtonGroup>
                 </Col>
               </Row>
@@ -1727,6 +1944,10 @@ class CreateTmx extends React.Component {
                     <option value="InfoPlate">銘版</option>
                     <option value="SmartphoneApp">アプリ</option>
                     <option value="LogosCatalog">ロゴスのカタログ</option>
+                    <option value="ToliCatalog">東リのカタログ</option>
+                    <option value="InfoPlate">銘版</option>
+                    <option value="AirBoost">エア・ブースト（HYOD)</option>
+                    <option value="Accessories">別売品</option>
                 </select>   
                 </Col>
               </Row>
@@ -1765,6 +1986,7 @@ class CreateTmx extends React.Component {
                     <option value="it-it">イタリア語</option>
                     <option value="pl-pl">ポーランド語</option>
                     <option value="tr-tr">トルコ語</option>
+                    <option value="ar-ar">アラビア語</option>
                 </select>
               </Col>
             </Row>
@@ -1804,6 +2026,7 @@ class CreateTmx extends React.Component {
                     <option value="it-it">イタリア語</option>
                     <option value="pl-pl">ポーランド語</option>
                     <option value="tr-tr">トルコ語</option>
+                    <option value="ar-ar">アラビア語</option>
                 </select>   
               </Col>
             </Row>
