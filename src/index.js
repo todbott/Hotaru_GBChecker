@@ -946,6 +946,9 @@ class MergeTmx extends React.Component {
       pastedSource: "",
       pastedTarget: "",
 
+      pastedSourceLength: 0,
+      pastedTargetLength: 0,
+
       file: null,
       fileName: "",
 
@@ -1050,94 +1053,105 @@ class MergeTmx extends React.Component {
   async handleSubmit(event) {
     event.preventDefault();
 
-    var newSegments = [];
-    var baseSegments = [];
+    //If the number of lines in the source and target copy-paste boxes
+    //are not the same, send an alert
+    if (this.state.pastedSourceLength !== this.state.pastedTargetLength) {
+      this.setState({show: true})
+      this.setState({modalTitle: "行数が違います"})
+      this.setState({modalBody:  `ソースに　${this.state.pastedSourceLength}行　があり、ターゲットに　${this.state.pastedTargetLength}行　があります。行数が違うであれば、データベースの書き込みが出来なくなります。`
+    })
+    
+    } else { 
 
-    if (this.state.updateFromTmx === true) {
+      var newSegments = [];
+      var baseSegments = [];
 
-      let bothFiles = await this.readAllFiles([this.state.file])
-      
-      this.getTmxContents(bothFiles[0], "file")
+      if (this.state.updateFromTmx === true) {
 
-      newSegments = this.state.segmentArray
-      baseSegments = await this.getPairsFromBackend();
+        let bothFiles = await this.readAllFiles([this.state.file])
+        
+        this.getTmxContents(bothFiles[0], "file")
 
-    } else {
+        newSegments = this.state.segmentArray
+        baseSegments = await this.getPairsFromBackend();
 
-      baseSegments = await this.getPairsFromBackend();
+      } else {
 
-      console.log(this.state.pastedSource)
-      let pastedSourceArray = this.state.pastedSource.split(/\n/)
-      let pastedTargetArray = this.state.pastedTarget.split(/\n/)
+        baseSegments = await this.getPairsFromBackend();
 
-      for (var s=0; s<pastedSourceArray.length; s++) {
-        newSegments.push(pastedSourceArray[s])
-        newSegments.push(pastedTargetArray[s])
+        console.log(this.state.pastedSource)
+        let pastedSourceArray = this.state.pastedSource.split(/\n/)
+        let pastedTargetArray = this.state.pastedTarget.split(/\n/)
+
+        for (var s=0; s<pastedSourceArray.length; s++) {
+          newSegments.push(pastedSourceArray[s])
+          newSegments.push(pastedTargetArray[s])
+        }
+        
       }
-      
-    }
 
-    // There's a possibility that we couldn't get the baseSegments from the backend
-    // (probably because the langauge pair/category/factory didn't exist)
-    // so we'll have to skip the whole thing if baseSegments is empty
+      // There's a possibility that we couldn't get the baseSegments from the backend
+      // (probably because the langauge pair/category/factory didn't exist)
+      // so we'll have to skip the whole thing if baseSegments is empty
 
-    if (baseSegments) {
+      if (baseSegments) {
 
-      let safbu = this.state.segmentArrayForBackendUpdate;
+        let safbu = this.state.segmentArrayForBackendUpdate;
 
-      for (var n=0; n < newSegments.length; n = n + 2) {
+        for (var n=0; n < newSegments.length; n = n + 2) {
 
-        let updatedUsingThisNewTarget = false;
-        let skipThisOne = false;
+          let updatedUsingThisNewTarget = false;
+          let skipThisOne = false;
 
-        // get the source and target segment from the new TMX file
-        let thisNewSource = newSegments[n]
-        let thisNewTarget = newSegments[n+1]
+          // get the source and target segment from the new TMX file
+          let thisNewSource = newSegments[n]
+          let thisNewTarget = newSegments[n+1]
 
-        // loop through the base file, looking for a source match.
-        // If we find a match where the source is the same but the target is different, 
-        // replace the target in the base file
-        for (var b=0; b < baseSegments.length; b = b + 2) {
-          if ((baseSegments[b] === thisNewSource) && (baseSegments[b+1] !== thisNewTarget)) {
-            baseSegments[b+1] = thisNewTarget
-            updatedUsingThisNewTarget = true;
-            safbu.push(baseSegments[b])
-            safbu.push(thisNewTarget)
-          } 
-          if ((baseSegments[b] === thisNewSource) && (baseSegments[b+1] === thisNewTarget)) {
-            skipThisOne = true;
+          // loop through the base file, looking for a source match.
+          // If we find a match where the source is the same but the target is different, 
+          // replace the target in the base file
+          for (var b=0; b < baseSegments.length; b = b + 2) {
+            if ((baseSegments[b] === thisNewSource) && (baseSegments[b+1] !== thisNewTarget)) {
+              baseSegments[b+1] = thisNewTarget
+              updatedUsingThisNewTarget = true;
+              safbu.push(baseSegments[b])
+              safbu.push(thisNewTarget)
+            } 
+            if ((baseSegments[b] === thisNewSource) && (baseSegments[b+1] === thisNewTarget)) {
+              skipThisOne = true;
+            }
+          }
+
+          if (skipThisOne === false) {
+            // Now the loop is over.  Did we update a segment? Let's check
+            // by looking at the updatedUsingThisNewTarget boolean
+            if (updatedUsingThisNewTarget === true) {
+              let nu = this.state.numberOfUpdates
+              nu+=1
+              this.setState({numberOfUpdates: nu})
+            } else { // If we didn't update a segment, just add this new source and
+                    // new target to the segments and innards to go into the final tmx file
+              baseSegments.push(thisNewSource)
+              baseSegments.push(thisNewTarget)
+
+              safbu.push(thisNewSource)
+              safbu.push(thisNewTarget)
+
+              // Then increase the number of additions by one
+              let na = this.state.numberOfAdditions
+              na+=1
+              this.setState({numberOfAdditions: na})
+            }
           }
         }
 
-        if (skipThisOne === false) {
-          // Now the loop is over.  Did we update a segment? Let's check
-          // by looking at the updatedUsingThisNewTarget boolean
-          if (updatedUsingThisNewTarget === true) {
-            let nu = this.state.numberOfUpdates
-            nu+=1
-            this.setState({numberOfUpdates: nu})
-          } else { // If we didn't update a segment, just add this new source and
-                  // new target to the segments and innards to go into the final tmx file
-            baseSegments.push(thisNewSource)
-            baseSegments.push(thisNewTarget)
+        this.setState({segmentArray: baseSegments})
+        this.setState({segmentArrayForBackendUpdate: safbu})
+        console.log(safbu.length);
 
-            safbu.push(thisNewSource)
-            safbu.push(thisNewTarget)
-
-            // Then increase the number of additions by one
-            let na = this.state.numberOfAdditions
-            na+=1
-            this.setState({numberOfAdditions: na})
-          }
-        }
+        // download the new tmx file
+        this.handleDownloadClick()
       }
-
-      this.setState({segmentArray: baseSegments})
-      this.setState({segmentArrayForBackendUpdate: safbu})
-      console.log(safbu.length);
-
-      // download the new tmx file
-      this.handleDownloadClick()
     }
   }
 
@@ -1355,21 +1369,28 @@ class MergeTmx extends React.Component {
 
               {(this.state.goOn && this.state.updateFromCopyPaste) ?
                 (
-                
+               
                 <Row style={{ marginTop: 5, marginBottom: 5}}>
                 <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">     
                     <Form.Control as="textarea" 
                     rows={3} 
                     columns={200} 
-                    onChange={(e) => this.setState({pastedSource: e.target.value})} />
+                    onChange={(e) => {
+                      this.setState({pastedSource: e.target.value});
+                      this.setState({pastedSourceLength: e.target.value.split(/\n/).length});
+                    }} />
                 </Col>
                 <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">     
                     <Form.Control as="textarea" 
                     rows={3} 
                     columns={200} 
-                    onChange={(e) => this.setState({pastedTarget: e.target.value})} />
+                    onChange={(e) => {
+                      this.setState({pastedTarget: e.target.value});
+                      this.setState({pastedTargetLength: e.target.value.split(/\n/).length});
+                    }} />
                 </Col>
               </Row>
+
                 ):(<></>)
                 
 
