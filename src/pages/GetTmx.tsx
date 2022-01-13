@@ -61,7 +61,7 @@ class GetTmx extends React.Component<{}, {value: any, apiKey: string, sourceCode
       render() {
         return (
           <Container>
-            <PageHeader></PageHeader>
+            <PageHeader modoru={true}></PageHeader>
             <Form>
               <Form.Group controlId="formFile" className="mb-3">
               <Row style={{ marginTop: 5, marginBottom: 5}}>

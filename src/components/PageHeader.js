@@ -11,8 +11,8 @@ import CheckOrEdit from '../pages/CheckOrEdit'
 
 class PageHeader extends React.Component {
 
-    constructor() {
-      super();
+    constructor(props) {
+      super(props);
       this.handleClick = this.handleClick.bind(this);
     }
   
@@ -35,18 +35,25 @@ class PageHeader extends React.Component {
     }
   
     render() {
+
+    
+        console.log(this.props.modoru)
   
       return (
         <Container>
         <Row style={{marginTop: 10, backgroundColor: '#E6E6E6'}}>
-        <Col style={{display:'flex', justifyContent:'left'}}>
-        <Button 
-              variant="warning" 
-              size="sm" 
-              onClick={this.handleClick}>
-                戻る
-            </Button>
-        </Col>
+        { this.props.modoru ? 
+               (
+                 <Col style={{display:'flex', justifyContent:'left'}}>
+                 <Button 
+                       variant="warning" 
+                       size="sm" 
+                       onClick={this.handleClick}>
+                         戻る
+                     </Button>
+                 </Col>
+               ) : (<></>)
+              }
         <Col style={{display:'flex', justifyContent:'right'}}>
         <Button 
               variant="danger" 

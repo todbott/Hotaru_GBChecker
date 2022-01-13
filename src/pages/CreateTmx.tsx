@@ -184,7 +184,7 @@ class CreateTmx extends React.Component<{},
       
           return (
             <Container>
-              <PageHeader></PageHeader>
+              <PageHeader modoru={true}></PageHeader>
               <Modal show={this.state.show} onHide={this.handleClose}>
                           <Modal.Header closeButton>
                               <Modal.Title>{this.state.modalTitle}</Modal.Title>

@@ -9,6 +9,7 @@ import GetTmx from './GetTmx';
 import UpdateTmx from './UpdateTmx';
 import MergeTmx from './MergeTmx';
 import CreateTmx from './CreateTmx';
+import PageHeader from '../components/PageHeader';
 
 class CheckOrEdit extends React.Component<{}, {value: string}> {
 
@@ -58,6 +59,7 @@ class CheckOrEdit extends React.Component<{}, {value: string}> {
       render() {
         return (
           <Container>
+              <PageHeader modoru={false}></PageHeader>
             <Row style={{ marginTop: 50, marginBottom: 5}}>
               <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
                 <h3>翻訳チェック・メモリ更新</h3>

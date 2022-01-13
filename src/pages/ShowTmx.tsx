@@ -193,7 +193,7 @@ class ShowTmx extends React.Component<
       
       return (
         <Container>
-          <PageHeader></PageHeader>
+          <PageHeader modoru={true}></PageHeader>
           <Modal show={this.state.show}>
                       <Modal.Header closeButton>
                           <Modal.Title>休憩もしくは終わり</Modal.Title>
