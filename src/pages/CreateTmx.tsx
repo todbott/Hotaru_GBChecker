@@ -7,6 +7,10 @@ import MySpinner from '../components/MySpinner';
 import PageHeader from '../components/PageHeader';
 import ShowPairs from '../components/ShowPairs';
 
+import CustomerPicker from './CustomerPicker';
+
+import GetPairsFromBackend from '../services/GetPairsFromBackend';
+
 class CreateTmx extends React.Component<{}, 
     {
         show: boolean,
@@ -16,14 +20,6 @@ class CreateTmx extends React.Component<{},
         showPairs: boolean,
         BorK: string,    
         customerCategory: string,
-        BiwakoVariant: string,
-        KanaokaVariant: string,
-        DaikinGeneralVariant: string,
-        LogosVariant: string,
-        HyodVariant: string,
-        OkKizaiVariant: string,
-        HotaruThaiVariant: string,
-        ToliVariant: string,
         sourceCode: string,
         targetCode: string,
         sourceKanji: string,
@@ -45,14 +41,6 @@ class CreateTmx extends React.Component<{},
       
             BorK: '',    
             customerCategory: '',
-            BiwakoVariant: 'secondary',
-            KanaokaVariant: 'secondary',
-            DaikinGeneralVariant: 'secondary',
-            LogosVariant: 'secondary',
-            HyodVariant: 'secondary',
-            OkKizaiVariant: 'secondary',
-            HotaruThaiVariant: 'secondary',
-            ToliVariant: 'secondary',
       
             sourceCode: "en-us",
             targetCode: "en-us",
@@ -65,40 +53,28 @@ class CreateTmx extends React.Component<{},
           this.handleShowSubmit = this.handleShowSubmit.bind(this);
           this.handleClose = this.handleClose.bind(this);
         }
+
+        onChangeValueHandler = (val: any[] ) => {
+          console.log(val)
+          this.setState({ BorK: val[0] })
+          this.setState({ customerCategory: val[1]})
+        }
       
         async handleSubmit(event: { preventDefault: () => void; }) {
           event.preventDefault();
           this.setState({showSpinner: true})
       
-          // get sentences using the getPutSentencesForHotaru endpoint in GCP
-          const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              get_or_put: 'get',
-              source: this.state.sourceCode,
-              target: this.state.targetCode,
-              s_sentence: '',
-              t_sentence: '',
-              b_or_k: this.state.customerCategory,
-              category: this.state.category,
-              associated_zuban: ''
-            })
-          };
-          console.log(requestOptions.body);
-      
-          try {
-            const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
-            const json = await response.json();
+          let maybePairs = await GetPairsFromBackend(this.state.sourceCode, this.state.targetCode, this.state.customerCategory, this.state.category)
+          if (maybePairs !== "no pairs") {
       
             this.setState({showSpinner: false})
-            this.setState({segmentArray: json.contents});
+            this.setState({segmentArray: maybePairs.contents});
             this.handleDownloadClick()
       
             this.setState({show: true})
             this.setState({modalTitle: "Complete"})
             this.setState({modalBody: "カスタムな*.tmx ファイルがダウンロードフォルダに保存されます。*.sdltm 形式に変換してからトラドスプロジェクトに搭載してください。"})
-          } catch (e) {
+          } else {
             this.setState({showSpinner: false})
             this.setState({show: true})
             this.setState({modalTitle:  '文章ペアが存在していない'})
@@ -108,33 +84,15 @@ class CreateTmx extends React.Component<{},
       
         async handleShowSubmit(event: { preventDefault: () => void; }) {
           event.preventDefault();
+          
           this.setState({showSpinner: true})
       
-          // get sentences using the getPutSentencesForHotaru endpoint in GCP
-          const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              get_or_put: 'get',
-              source: this.state.sourceCode,
-              target: this.state.targetCode,
-              s_sentence: '',
-              t_sentence: '',
-              b_or_k: this.state.customerCategory,
-              category: this.state.category,
-              associated_zuban: ''
-            })
-          };
-          console.log(requestOptions.body)
-      
-          try {
-            const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
-            const json = await response.json();
+          let maybePairs = await GetPairsFromBackend(this.state.sourceCode, this.state.targetCode, this.state.customerCategory, this.state.category)
+          if (maybePairs !== "no pairs") {
             this.setState({showSpinner: false})
-            this.setState({segmentArray: json.contents});
+            this.setState({segmentArray: maybePairs.contents});
             this.setState({showPairs: true})
-      
-          } catch (e) {
+          } else {
             this.setState({showSpinner: false})
             this.setState({show: true})
             this.setState({modalTitle:  '文章ペアが存在していない'})
@@ -206,109 +164,7 @@ class CreateTmx extends React.Component<{},
                 <Form>
                   <Form.Group controlId="formFile" className="mb-3">
       
-                    <Row style={{ marginTop: 5, marginBottom: 5}}>
-                      <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
-                      <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
-                      <Button variant={this.state.BiwakoVariant} onClick={() => {
-                            this.setState({BorK: 'shinpuku@hotaru.ltd'})
-                            this.setState({customerCategory: 'K'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'info'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}
-                          >金岡案件</Button>
-                          <Button variant={this.state.KanaokaVariant} onClick={() => {
-                            this.setState({BorK: 'nishino@hotaru.ltd'})
-                            this.setState({customerCategory: 'B'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'info'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>滋賀案件</Button>
-                          <Button variant={this.state.DaikinGeneralVariant} onClick={() => {
-                            this.setState({BorK: 'gillies@hotaru.ltd'})
-                            this.setState({customerCategory: 'DaikinGeneral'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'info'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>ダイキン一般案件</Button>
-                          <Button variant={this.state.LogosVariant} onClick={() => {
-                            this.setState({BorK: 'kotera@hotaru.ltd'})
-                            this.setState({customerCategory: 'L'})
-                            this.setState({LogosVariant: 'info'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>ロゴス案件</Button>
-                          <Button variant={this.state.HotaruThaiVariant} onClick={() => {
-                            this.setState({BorK: 'tanaka@hotaru.ltd'})
-                            this.setState({customerCategory: 'HotaruThai'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'info'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>ホタルタイ案件</Button>
-                          <Button variant={this.state.HyodVariant} onClick={() => {
-                            this.setState({BorK: 'kotera@hotaru.ltd'})
-                            this.setState({customerCategory: 'Hyod'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'info'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>HYOD 案件</Button>
-                          <Button variant={this.state.OkKizaiVariant} onClick={() => {
-                            this.setState({BorK: 'shinpuku@hotaru.ltd'})
-                            this.setState({customerCategory: 'OkKizai'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'info'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>オーケー器材案件</Button>
-                          <Button variant={this.state.ToliVariant} onClick={() => {
-                            this.setState({BorK: 'kotera@hotaru.ltd'})
-                            this.setState({customerCategory: 'Toli'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'info'})
-                          }}>東リ案件</Button>
-                      </ButtonGroup>
-                      </Col>
-                    </Row>
+                  <CustomerPicker onChangeValue={this.onChangeValueHandler} />
       
                     <Row style={{ marginTop: 5, marginBottom: 5}}>
                       <Col className="d-grid gap-2">    

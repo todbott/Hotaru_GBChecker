@@ -4,26 +4,23 @@ import { Button, ButtonGroup, Col, Container, Form, Modal, Row } from 'react-boo
 import MySpinner from '../components/MySpinner';
 import PageHeader from '../components/PageHeader';
 import CheckOrEdit from './CheckOrEdit';
+import GetPairsFromBackend from '../services/GetPairsFromBackend';
+import SendPairsToBackend from '../services/SendPairsToBackend';
+import SendUpdateEmail from '../services/SendUpdateEmail';
+import CustomerPicker from './CustomerPicker';
 
 class MergeTmx extends React.Component<{},
 {
     show: boolean,
     modalTitle: string,
     modalBody: string,
+    showConfirmationModal: boolean,
     showSpinner: boolean,
     updateFromTmx: boolean,
     updateFromCopyPaste: boolean,
     goOn: boolean,
     BorK: string,
     customerCategory: string,
-    BiwakoVariant: string,
-    KanaokaVariant: string,
-    DaikinGeneralVariant: string,
-    LogosVariant: string,
-    HyodVariant: string,
-    OkKizaiVariant: string,
-    HotaruThaiVariant: string,
-    ToliVariant: string,
     TmxVariant: string,
     CopyPasteVariant: string,
     category: string,
@@ -51,6 +48,8 @@ class MergeTmx extends React.Component<{},
             show: false,
             modalTitle: "",
             modalBody: "",
+
+            showConfirmationModal: false,
       
             showSpinner: false,
       
@@ -60,14 +59,6 @@ class MergeTmx extends React.Component<{},
       
             BorK: '',
             customerCategory: '',
-            BiwakoVariant: 'secondary',
-            KanaokaVariant: 'secondary',
-            DaikinGeneralVariant: 'secondary',
-            LogosVariant: 'secondary',
-            HyodVariant: 'secondary',
-            OkKizaiVariant: 'secondary',
-            HotaruThaiVariant: 'secondary',
-            ToliVariant: 'secondary',
       
             TmxVariant: 'secondary',
             CopyPasteVariant: 'secondary',
@@ -100,6 +91,12 @@ class MergeTmx extends React.Component<{},
           };
           this.handleSubmit = this.handleSubmit.bind(this);
           this.handleClose = this.handleClose.bind(this);
+        }
+
+        onChangeValueHandler = (val: any[] ) => {
+          console.log(val)
+          this.setState({ BorK: val[0] })
+          this.setState({ customerCategory: val[1]})
         }
       
       
@@ -142,31 +139,13 @@ class MergeTmx extends React.Component<{},
         }
       
         async getPairsFromBackend() {
-          // get sentences using the getPutSentencesForHotaru endpoint in GCP
-          this.setState({showSpinner: true})
           
-          const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              get_or_put: 'get',
-              source: this.state.sourceCode,
-              target: this.state.targetCode,
-              s_sentence: '',
-              t_sentence: '',
-              b_or_k: this.state.customerCategory,
-              category: this.state.category,
-              associated_zuban: ''
-            })
-          };
-          console.log(requestOptions.body);
-          try {
-            const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
-            const json = await response.json();
-            this.setState({baseSegmentArray: json.contents})
+          let maybePairs = await GetPairsFromBackend(this.state.sourceCode, this.state.targetCode, this.state.customerCategory, this.state.category)
+          if (maybePairs !== "no pairs") {
+            this.setState({baseSegmentArray: maybePairs.contents})
             this.setState({showSpinner: false})
-            return json.contents;
-          } catch (e) {
+            return maybePairs.contents
+          } else {
             this.setState({showSpinner: false})
             this.setState({show: true})
             this.setState({modalTitle:  '文章ペアが存在していない'})
@@ -217,7 +196,6 @@ class MergeTmx extends React.Component<{},
             // There's a possibility that we couldn't get the baseSegments from the backend
             // (probably because the langauge pair/category/factory didn't exist)
             // so we'll have to skip the whole thing if baseSegments is empty
-      
             if (baseSegments) {
       
               let safbu = this.state.segmentArrayForBackendUpdate;
@@ -273,31 +251,17 @@ class MergeTmx extends React.Component<{},
               this.setState({segmentArrayForBackendUpdate: safbu})
               console.log(safbu.length);
       
-              // download the new tmx file
-              this.handleDownloadClick()
+              // confirm with the user, then
+              // send an email to the people, then
+              // perform merging of the new segments/changed segments in the database
+              this.setState({showConfirmationModal: true})
             }
           }
         }
       
-        async handleDownloadClick() {
+        async handleContinue() {
       
-          const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              shinki_or_saihonyaku: 'shinki',
-              zuban: this.state.zuban,
-              source: this.state.sourceKanji,
-              target: this.state.targetKanji,
-              updates: this.state.numberOfUpdates,
-              additions: this.state.numberOfAdditions,
-              BorK: this.state.BorK
-            })
-          };
-          console.log(requestOptions.body);
-          fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/sendEmailToHotaru', requestOptions)
-            .then(response => response.json())
-            .then(data => console.log(data));
+          SendUpdateEmail('shinki', this.state.zuban, this.state.sourceKanji, this.state.targetKanji, this.state.numberOfUpdates, this.state.numberOfAdditions, this.state.BorK)
       
           // Then, update the actual segments by sending them to the backend
           // Due to Google Cloud Function Timeouts (9 minutes max), it seems like only about 500
@@ -332,21 +296,7 @@ class MergeTmx extends React.Component<{},
           
       
           for (var r = 0; r < ssegs.length; r++) {
-            let requestOptionsPut = {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                get_or_put: 'put',
-                source: this.state.sourceCode,
-                target: this.state.targetCode,
-                s_sentence: ssegs[r],
-                t_sentence: tsegs[r],
-                b_or_k: this.state.customerCategory,
-                category: this.state.category,
-                associated_zuban: this.state.zuban
-              })
-            };
-            fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
+            SendPairsToBackend(this.state.sourceCode, this.state.targetCode, ssegs[r], tsegs[r], this.state.customerCategory, this.state.category, this.state.zuban)
           }
           this.setState({show: true})
           this.setState({modalTitle: "Complete"})
@@ -355,14 +305,15 @@ class MergeTmx extends React.Component<{},
         }
       
         handleClose() {
-              this.setState({show: false})
+            this.setState({show: false})
+            this.setState({showConfirmationModal: false})
           
-          ReactDOM.render(
-            <React.StrictMode>
-              <CheckOrEdit />
-            </React.StrictMode>,
-            document.getElementById('root')
-          );
+            ReactDOM.render(
+              <React.StrictMode>
+                <CheckOrEdit />
+              </React.StrictMode>,
+              document.getElementById('root')
+            );
           
           }
       
@@ -372,21 +323,61 @@ class MergeTmx extends React.Component<{},
             <Container>
               <PageHeader modoru={true}></PageHeader>
               <Modal show={this.state.show} onHide={this.handleClose}>
-                          <Modal.Header closeButton>
-                              <Modal.Title>{this.state.modalTitle}</Modal.Title>
-                          </Modal.Header>
-                              <Modal.Body>
-                                  {this.state.modalBody}
-                              </Modal.Body>
-                          <Modal.Footer>
+                  <Modal.Header closeButton>
+                      <Modal.Title>{this.state.modalTitle}</Modal.Title>
+                  </Modal.Header>
+                      <Modal.Body>
+                          {this.state.modalBody}
+                      </Modal.Body>
+                  <Modal.Footer>
                 <Button variant="secondary" onClick={this.handleClose}>
-                              Close
-                          </Button>
-                          </Modal.Footer>
-                      </Modal>
+                    Close
+                </Button>
+                </Modal.Footer>
+            </Modal>
               { this.state.showSpinner ? 
                (
                  <MySpinner />
+               ) : (<></>)
+              }
+              { this.state.showConfirmationModal ? 
+               (
+                
+                  <Modal show="true" style={{ content: {borderRadius: '10px'}}}>
+                  <Modal.Body>
+                    <Container>
+                      <Row style={{fontWeight: 'bolder'}}>
+                        <Col>
+                          下記の詳細を確認してくから進んでください。
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col>
+                          {this.state.sourceKanji} ⇒ {this.state.targetKanji}
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col>
+                          {this.state.numberOfUpdates} が更新になり、{this.state.numberOfAdditions}が追加になります。
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col>
+                          {this.state.customerCategory} の {this.state.category}
+                        </Col>
+                      </Row>
+                    </Container>
+                  </Modal.Body>
+                  <Modal.Footer>
+                      <Button variant="success" onClick={this.handleContinue}>
+                          Continue
+                      </Button>
+                      <Button variant="danger" onClick={this.handleClose}>
+                          Cancel
+                      </Button>
+                  </Modal.Footer>
+                </Modal>
+                
                ) : (<></>)
               }
                 <Form>
@@ -443,109 +434,7 @@ class MergeTmx extends React.Component<{},
                       </Col>
                     </Row>
       
-                    <Row style={{ marginTop: 5, marginBottom: 5}}>
-                      <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
-                      <ButtonGroup style={{ marginTop: 10, marginBottom: 10}} aria-label="金岡案件">
-                      <Button variant={this.state.BiwakoVariant} onClick={() => {
-                            this.setState({BorK: 'shinpuku@hotaru.ltd'})
-                            this.setState({customerCategory: 'K'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'info'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}
-                          >金岡案件</Button>
-                          <Button variant={this.state.KanaokaVariant} onClick={() => {
-                            this.setState({BorK: 'nishino@hotaru.ltd'})
-                            this.setState({customerCategory: 'B'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'info'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>滋賀案件</Button>
-                          <Button variant={this.state.DaikinGeneralVariant} onClick={() => {
-                            this.setState({BorK: 'gillies@hotaru.ltd'})
-                            this.setState({customerCategory: 'DaikinGeneral'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'info'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>ダイキン一般案件</Button>
-                          <Button variant={this.state.LogosVariant} onClick={() => {
-                            this.setState({BorK: 'kotera@hotaru.ltd'})
-                            this.setState({customerCategory: 'L'})
-                            this.setState({LogosVariant: 'info'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>ロゴス案件</Button>
-                          <Button variant={this.state.HotaruThaiVariant} onClick={() => {
-                            this.setState({BorK: 'tanaka@hotaru.ltd'})
-                            this.setState({customerCategory: 'HotaruThai'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'info'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>ホタルタイ案件</Button>
-                          <Button variant={this.state.HyodVariant} onClick={() => {
-                            this.setState({BorK: 'kotera@hotaru.ltd'})
-                            this.setState({customerCategory: 'Hyod'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'info'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>HYOD 案件</Button>
-                          <Button variant={this.state.OkKizaiVariant} onClick={() => {
-                            this.setState({BorK: 'shinpuku@hotaru.ltd'})
-                            this.setState({customerCategory: 'OkKizai'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'info'})
-                            this.setState({ToliVariant: 'secondary'})
-                          }}>オーケー器材案件</Button>
-                          <Button variant={this.state.ToliVariant} onClick={() => {
-                            this.setState({BorK: 'kotera@hotaru.ltd'})
-                            this.setState({customerCategory: 'Toli'})
-                            this.setState({LogosVariant: 'secondary'})
-                            this.setState({KanaokaVariant: 'secondary'})
-                            this.setState({BiwakoVariant: 'secondary'})
-                            this.setState({DaikinGeneralVariant: 'secondary'})
-                            this.setState({HotaruThaiVariant: 'secondary'})
-                            this.setState({HyodVariant: 'secondary'})
-                            this.setState({OkKizaiVariant: 'secondary'})
-                            this.setState({ToliVariant: 'info'})
-                          }}>東リ案件</Button>
-                      </ButtonGroup>
-                      </Col>
-                    </Row>
+                    <CustomerPicker onChangeValue={this.onChangeValueHandler} />
       
                   { (this.state.goOn && this.state.updateFromTmx) ? 
                     (

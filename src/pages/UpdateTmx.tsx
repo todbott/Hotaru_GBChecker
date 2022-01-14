@@ -13,6 +13,10 @@ import PageHeader from '../components/PageHeader';
 import MySpinner from '../components/MySpinner';
 
 import CheckOrEdit from '../pages/CheckOrEdit';
+import GetPairsFromBackend from '../services/GetPairsFromBackend';
+import SendPairsToBackend from '../services/SendPairsToBackend';
+import SendUpdateEmail from '../services/SendUpdateEmail';
+import CustomerPicker from './CustomerPicker';
 
 class UpdateTmx extends React.Component<
 {}, {
@@ -32,14 +36,6 @@ class UpdateTmx extends React.Component<
     category: string,
     BorK: string,
     customerCategory: string,
-    BiwakoVariant: string,
-    KanaokaVariant: string,
-    DaikinGeneralVariant: string,
-    LogosVariant: string,
-    HyodVariant: string,
-    OkKizaiVariant: string,
-    HotaruThaiVariant: string,
-    ToliVariant: string,
     sourceKanji: string,
     targetKanji: string
 }> {
@@ -67,14 +63,6 @@ class UpdateTmx extends React.Component<
     
           BorK: '',
           customerCategory: '',
-          BiwakoVariant: 'secondary',
-          KanaokaVariant: 'secondary',
-          DaikinGeneralVariant: 'secondary',
-          LogosVariant: 'secondary',
-          HyodVariant: 'secondary',
-          OkKizaiVariant: 'secondary',
-          HotaruThaiVariant: 'secondary',
-          ToliVariant: 'secondary',
           
           sourceKanji: "英語（北米）",
           targetKanji: "英語（北米）"
@@ -84,6 +72,12 @@ class UpdateTmx extends React.Component<
         this.handleUpdateClick = this.handleUpdateClick.bind(this);
         this.handleFinishClick = this.handleFinishClick.bind(this);
         this.handleClose = this.handleClose.bind(this);
+      }
+
+      onChangeValueHandler = (val: any[] ) => {
+        console.log(val)
+        this.setState({ BorK: val[0] })
+        this.setState({ customerCategory: val[1]})
       }
     
       handleSearchClick() {
@@ -111,29 +105,12 @@ class UpdateTmx extends React.Component<
         event.preventDefault();
         this.setState({showSpinner: true});
     
-        // get all sentences using the getPutSentencesForHotaru endpoint in GCP
-        const requestOptions = {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            get_or_put: 'get',
-            source: this.state.sourceCode,
-            target: this.state.targetCode,
-            s_sentence: '',
-            t_sentence: '',
-            b_or_k: this.state.customerCategory,
-            category: this.state.category,
-            associated_zuban: ''
-          })
-        };
-        console.log(requestOptions.body);
-        try {
-          const response = await fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptions)
-          const json = await response.json();
-          this.setState({segmentArray: json.contents});
+        let maybePairs = await GetPairsFromBackend(this.state.sourceCode, this.state.targetCode, this.state.customerCategory, this.state.category)
+        if (maybePairs !== "no pairs") {
+          this.setState({segmentArray: maybePairs.contents});
           this.setState({showSearchArea: true})
           this.setState({showSpinner: false})
-        } catch (e) {
+        } else {
           this.setState({show: true})
           this.setState({modalTitle:  '文章ペアが存在していない'})
           this.setState({modalBody: "選択しました言語ペア・カテゴリ・工場（滋賀か金岡）の文章が存在していないですので、設定を変えてください。"})
@@ -144,24 +121,8 @@ class UpdateTmx extends React.Component<
     
       async handleFinishClick() {
     
-        // send a POST request to the backend, triggering an email to everyone about
-        // the update
-        const requestOptions = {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            shinki_or_saihonyaku: 'saihonyaku',
-            zuban: this.state.zuban,
-            source: this.state.sourceKanji,
-            target: this.state.targetKanji,
-            updates: this.state.numberOfUpdates,
-            additions: '0',
-            BorK: this.state.BorK
-          })
-        };
-        fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/sendEmailToHotaru', requestOptions)
-          .then(response => response.json())
-          .then(data => console.log(data));
+        SendUpdateEmail('saihonyaku', this.state.zuban, this.state.sourceKanji, this.state.targetKanji, this.state.numberOfUpdates, '0', this.state.BorK)
+
     
         // Then, update the actual segments by sending them to the backend
     
@@ -173,23 +134,7 @@ class UpdateTmx extends React.Component<
           tsegs.push(safbu[s+1])
         }
     
-        const requestOptionsPut = {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            get_or_put: 'put',
-            source: this.state.sourceCode,
-            target: this.state.targetCode,
-            s_sentence: ssegs,
-            t_sentence: tsegs,
-            b_or_k: this.state.customerCategory,
-            category: this.state.category,
-            associated_zuban: ''
-          })
-        };
-        console.log(requestOptionsPut.body);
-        fetch('https://us-central1-hotaru-kanri.cloudfunctions.net/getPutSentencePairForHotaru', requestOptionsPut)
-        
+        await SendPairsToBackend(this.state.sourceCode, this.state.targetCode, ssegs, tsegs, this.state.customerCategory, this.state.category, '')
     
         this.setState({show: true})
         this.setState({modalTitle: "Complete"})
@@ -209,7 +154,7 @@ class UpdateTmx extends React.Component<
             document.getElementById('root')
           );
         }
-        }
+      }
     
       render() {
         return (
@@ -406,109 +351,7 @@ class UpdateTmx extends React.Component<
                   </Col>
                 </Row>
     
-                <Row style={{ marginTop: 5, marginBottom: 5}}>
-                  <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">    
-                    <ButtonGroup style={{ marginTop: 10, marginBottom: 10}}>
-                    <Button variant={this.state.BiwakoVariant} onClick={() => {
-                          this.setState({BorK: 'shinpuku@hotaru.ltd'})
-                          this.setState({customerCategory: 'K'})
-                          this.setState({LogosVariant: 'secondary'})
-                          this.setState({KanaokaVariant: 'secondary'})
-                          this.setState({BiwakoVariant: 'info'})
-                          this.setState({DaikinGeneralVariant: 'secondary'})
-                          this.setState({HotaruThaiVariant: 'secondary'})
-                          this.setState({HyodVariant: 'secondary'})
-                          this.setState({OkKizaiVariant: 'secondary'})
-                          this.setState({ToliVariant: 'secondary'})
-                        }}
-                        >金岡案件</Button>
-                        <Button variant={this.state.KanaokaVariant} onClick={() => {
-                          this.setState({BorK: 'nishino@hotaru.ltd'})
-                          this.setState({customerCategory: 'B'})
-                          this.setState({LogosVariant: 'secondary'})
-                          this.setState({KanaokaVariant: 'info'})
-                          this.setState({BiwakoVariant: 'secondary'})
-                          this.setState({DaikinGeneralVariant: 'secondary'})
-                          this.setState({HotaruThaiVariant: 'secondary'})
-                          this.setState({HyodVariant: 'secondary'})
-                          this.setState({OkKizaiVariant: 'secondary'})
-                          this.setState({ToliVariant: 'secondary'})
-                        }}>滋賀案件</Button>
-                        <Button variant={this.state.DaikinGeneralVariant} onClick={() => {
-                          this.setState({BorK: 'gillies@hotaru.ltd'})
-                          this.setState({customerCategory: 'DaikinGeneral'})
-                          this.setState({LogosVariant: 'secondary'})
-                          this.setState({KanaokaVariant: 'secondary'})
-                          this.setState({BiwakoVariant: 'secondary'})
-                          this.setState({DaikinGeneralVariant: 'info'})
-                          this.setState({HotaruThaiVariant: 'secondary'})
-                          this.setState({HyodVariant: 'secondary'})
-                          this.setState({OkKizaiVariant: 'secondary'})
-                          this.setState({ToliVariant: 'secondary'})
-                        }}>ダイキン一般案件</Button>
-                        <Button variant={this.state.LogosVariant} onClick={() => {
-                          this.setState({BorK: 'kotera@hotaru.ltd'})
-                          this.setState({customerCategory: 'L'})
-                          this.setState({LogosVariant: 'info'})
-                          this.setState({KanaokaVariant: 'secondary'})
-                          this.setState({BiwakoVariant: 'secondary'})
-                          this.setState({DaikinGeneralVariant: 'secondary'})
-                          this.setState({HotaruThaiVariant: 'secondary'})
-                          this.setState({HyodVariant: 'secondary'})
-                          this.setState({OkKizaiVariant: 'secondary'})
-                          this.setState({ToliVariant: 'secondary'})
-                        }}>ロゴス案件</Button>
-                        <Button variant={this.state.HotaruThaiVariant} onClick={() => {
-                          this.setState({BorK: 'tanaka@hotaru.ltd'})
-                          this.setState({customerCategory: 'HotaruThai'})
-                          this.setState({LogosVariant: 'secondary'})
-                          this.setState({KanaokaVariant: 'secondary'})
-                          this.setState({BiwakoVariant: 'secondary'})
-                          this.setState({DaikinGeneralVariant: 'secondary'})
-                          this.setState({HotaruThaiVariant: 'info'})
-                          this.setState({HyodVariant: 'secondary'})
-                          this.setState({OkKizaiVariant: 'secondary'})
-                          this.setState({ToliVariant: 'secondary'})
-                        }}>ホタルタイ案件</Button>
-                        <Button variant={this.state.HyodVariant} onClick={() => {
-                          this.setState({BorK: 'kotera@hotaru.ltd'})
-                          this.setState({customerCategory: 'Hyod'})
-                          this.setState({LogosVariant: 'secondary'})
-                          this.setState({KanaokaVariant: 'secondary'})
-                          this.setState({BiwakoVariant: 'secondary'})
-                          this.setState({DaikinGeneralVariant: 'secondary'})
-                          this.setState({HotaruThaiVariant: 'secondary'})
-                          this.setState({HyodVariant: 'info'})
-                          this.setState({OkKizaiVariant: 'secondary'})
-                          this.setState({ToliVariant: 'secondary'})
-                        }}>HYOD 案件</Button>
-                        <Button variant={this.state.OkKizaiVariant} onClick={() => {
-                          this.setState({BorK: 'shinpuku@hotaru.ltd'})
-                          this.setState({customerCategory: 'OkKizai'})
-                          this.setState({LogosVariant: 'secondary'})
-                          this.setState({KanaokaVariant: 'secondary'})
-                          this.setState({BiwakoVariant: 'secondary'})
-                          this.setState({DaikinGeneralVariant: 'secondary'})
-                          this.setState({HotaruThaiVariant: 'secondary'})
-                          this.setState({HyodVariant: 'secondary'})
-                          this.setState({OkKizaiVariant: 'info'})
-                          this.setState({ToliVariant: 'secondary'})
-                        }}>オーケー器材案件</Button>
-                        <Button variant={this.state.ToliVariant} onClick={() => {
-                          this.setState({BorK: 'kotera@hotaru.ltd'})
-                          this.setState({customerCategory: 'Toli'})
-                          this.setState({LogosVariant: 'secondary'})
-                          this.setState({KanaokaVariant: 'secondary'})
-                          this.setState({BiwakoVariant: 'secondary'})
-                          this.setState({DaikinGeneralVariant: 'secondary'})
-                          this.setState({HotaruThaiVariant: 'secondary'})
-                          this.setState({HyodVariant: 'secondary'})
-                          this.setState({OkKizaiVariant: 'secondary'})
-                          this.setState({ToliVariant: 'info'})
-                        }}>東リ案件</Button>
-                    </ButtonGroup>
-                  </Col>
-                </Row>
+                <CustomerPicker onChangeValue={this.onChangeValueHandler} />
     
                 <Row style={{ marginTop: 5, marginBottom: 5}}>
                           <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="d-grid gap-2">     
