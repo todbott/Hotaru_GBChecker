@@ -91,6 +91,7 @@ class MergeTmx extends React.Component<{},
           };
           this.handleSubmit = this.handleSubmit.bind(this);
           this.handleClose = this.handleClose.bind(this);
+          this.handleContinue = this.handleContinue.bind(this);
         }
 
         onChangeValueHandler = (val: any[] ) => {
@@ -259,7 +260,8 @@ class MergeTmx extends React.Component<{},
           }
         }
       
-        async handleContinue() {
+        handleContinue() {
+
       
           SendUpdateEmail('shinki', this.state.zuban, this.state.sourceKanji, this.state.targetKanji, this.state.numberOfUpdates, this.state.numberOfAdditions, this.state.BorK)
       
@@ -318,6 +320,8 @@ class MergeTmx extends React.Component<{},
           }
       
         render() {
+
+          console.log(this.state.sourceKanji)
       
           return (
             <Container>
