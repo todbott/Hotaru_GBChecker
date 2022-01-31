@@ -193,6 +193,7 @@ class CreateTmx extends React.Component<{},
                           <option value="InfoPlate">銘版</option>
                           <option value="AirBoost">エア・ブースト（HYOD)</option>
                           <option value="Accessories">別売品</option>
+                          <option value="FlarelessJoint">フレアレスジョイント</option>
                       </select>   
                       </Col>
                     </Row>
