@@ -241,6 +241,9 @@ class ShowTmx extends React.Component<
               {this.state.source}
             </Col>
             <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="block-example border border-primary">
+              {this.state.toTranslate}
+            </Col>
+            <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="block-example border border-primary">
               {this.state.translated}
             </Col>
           </Row>
