@@ -163,13 +163,20 @@ class ShowTmx extends React.Component<
         .then(
           ( res ) => { 
            
+            ///  adjust the match! 
+            // This code is crazy, but it basically makes the possibility of getting a
+            // 100% match higher, by shortening each word in the strings by 40%
+            // and making everything lowercase and punctuation-free before comparing them
             let text = res.data.translations[0].translatedText.replace(/(&quot;)/g,"\"")
             this.setState({translated: text})
-            let splitTranslated = text.split('')
-            let splitOriginal = original_string.split('')
-            const filteredArray = splitTranslated.filter((value: string) => splitOriginal.includes(value));
-            let diff = Math.abs(filteredArray.length - splitOriginal.length)
-            let match = 100 - diff * 100/splitOriginal.length
+            let splitTranslated = text.toLowerCase().replace(/[^\w\s]/g, "").split(' ').map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))
+            let splitOriginal = original_string.toLowerCase().replace(/[^\w\s]/g, "").split(' ').map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))
+            const filteredArray = splitOriginal.filter((value) => !splitTranslated.includes(value));
+            const filteredArrayTwo = splitTranslated.filter((value: string) => !splitOriginal.includes(value));
+ 
+            let diff = Math.abs(filteredArray.concat(filteredArrayTwo).length - splitOriginal.length)
+            let match = diff * 100/splitOriginal.length
+            console.log(match)
   
             //put the segments into the GBCheck file
             let allSegs = this.state.allSegments;
