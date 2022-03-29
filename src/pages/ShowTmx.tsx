@@ -176,6 +176,8 @@ class ShowTmx extends React.Component<
  
             let diff = Math.abs(filteredArray.concat(filteredArrayTwo).length - splitOriginal.length)
             let match = diff * 100/splitOriginal.length
+            console.log(splitTranslated)
+            console.log(splitOriginal)
             console.log(match)
   
             //put the segments into the GBCheck file
