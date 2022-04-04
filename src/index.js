@@ -1,14 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+import CheckOrEdit from './pages/CheckOrEdit';
 
-import LoginScreen from './pages/LoginScreen';
+// import LoginScreen from './pages/LoginScreen';
 
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
-    <LoginScreen />
+    <CheckOrEdit />
   </React.StrictMode>,
   document.getElementById('root')
 );

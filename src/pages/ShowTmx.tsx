@@ -168,17 +168,41 @@ class ShowTmx extends React.Component<
             // 100% match higher, by shortening each word in the strings by 40%
             // and making everything lowercase and punctuation-free before comparing them
             let text = res.data.translations[0].translatedText.replace(/(&quot;)/g,"\"")
-            this.setState({translated: text})
-            let splitTranslated = text.toLowerCase().replace(/[^\w\s]/g, "").split(' ').map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))
-            let splitOriginal = original_string.toLowerCase().replace(/[^\w\s]/g, "").split(' ').map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))
+            
+            let splitTranslated: string[] = []
+            let splitOriginal: string[] = []
+
+            // If the source language is JA, just replace spaces and split by each character
+            if (this.props.sourceCode === 'ja') {
+              splitTranslated = text.toLowerCase().replace(/[\s]/g, "").split('').map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))
+              splitOriginal = original_string.toLowerCase().replace(/[\s]/g, "").split('').map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))
+            } else {
+              // if it's English, split by words and replace everything that's not a letter or space
+              splitTranslated = text.toLowerCase().replace(/[^\w\s]/g, "").split(' ').map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))
+              splitOriginal = original_string.toLowerCase().replace(/[^\w\s]/g, "").split(' ').map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))              
+            }
+            // 
+
             const filteredArray = splitOriginal.filter((value) => !splitTranslated.includes(value));
             const filteredArrayTwo = splitTranslated.filter((value: string) => !splitOriginal.includes(value));
  
             let diff = Math.abs(filteredArray.concat(filteredArrayTwo).length - splitOriginal.length)
             let match = diff * 100/splitOriginal.length
-            console.log(splitTranslated)
-            console.log(splitOriginal)
-            console.log(match)
+            
+            let translatedWithColors = splitTranslated.map((v: string) => {
+              return (filteredArrayTwo.indexOf(v) > -1) ? ("<span style='color:red; font-weight: bold;'>" + v + "</span>") : v
+            }).join('')
+
+            let originalWithColors = splitOriginal.map((v: string) => {
+              return (filteredArray.indexOf(v) > -1) ? ("<span style='color:red; font-weight: bold;'>" + v + "</span>") : v
+            }).join('')
+
+            
+              
+            this.setState({source: originalWithColors})
+            this.setState({translated: translatedWithColors})
+
+            
   
             //put the segments into the GBCheck file
             let allSegs = this.state.allSegments;
@@ -247,13 +271,13 @@ class ShowTmx extends React.Component<
           </Row>      
           <Row>
             <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="block-example border border-primary">
-              {this.state.source}
+            <div dangerouslySetInnerHTML={{__html: this.state.source}} />
             </Col>
             <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="block-example border border-primary">
               {this.state.toTranslate}
             </Col>
             <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }} className="block-example border border-primary">
-              {this.state.translated}
+              <div dangerouslySetInnerHTML={{__html: this.state.translated}} />
             </Col>
           </Row>
           <Row style={{ marginTop: 50, marginBottom: 5}}>

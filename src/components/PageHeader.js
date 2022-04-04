@@ -5,7 +5,7 @@ import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container'
 
-import LoginScreen from '../pages/LoginScreen'
+// import LoginScreen from '../pages/LoginScreen'
 import CheckOrEdit from '../pages/CheckOrEdit'
 
 
@@ -25,19 +25,16 @@ class PageHeader extends React.Component {
       );
     }
   
-    handleLogoutClick() {
-      ReactDOM.render(
-        <React.StrictMode>
-          <LoginScreen />
-        </React.StrictMode>,
-        document.getElementById('root')
-      );
-    }
+    // handleLogoutClick() {
+    //   ReactDOM.render(
+    //     <React.StrictMode>
+    //       <LoginScreen />
+    //     </React.StrictMode>,
+    //     document.getElementById('root')
+    //   );
+    // }
   
     render() {
-
-    
-        console.log(this.props.modoru)
   
       return (
         <Container>
@@ -55,12 +52,12 @@ class PageHeader extends React.Component {
                ) : (<></>)
               }
         <Col style={{display:'flex', justifyContent:'right'}}>
-        <Button 
+        {/* <Button 
               variant="danger" 
               size="sm" 
               onClick={this.handleLogoutClick}>
                 ログアウト
-            </Button>
+            </Button> */}
         </Col>
         </Row>
         </Container>
