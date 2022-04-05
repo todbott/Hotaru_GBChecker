@@ -171,6 +171,7 @@ class ShowTmx extends React.Component<
             
             let splitTranslated: string[] = []
             let splitOriginal: string[] = []
+            let joinChar = '';
 
             // If the source language is JA, just replace spaces and split by each character
             if (this.props.sourceCode === 'ja') {
@@ -178,8 +179,9 @@ class ShowTmx extends React.Component<
               splitOriginal = original_string.toLowerCase().replace(/[\s]/g, "").split('').map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))
             } else {
               // if it's English, split by words and replace everything that's not a letter or space
-              splitTranslated = text.toLowerCase().replace(/[^\w\s]/g, "").split(' ').map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))
-              splitOriginal = original_string.toLowerCase().replace(/[^\w\s]/g, "").split(' ').map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))              
+              splitTranslated = text.toLowerCase().replace(/[^\w\s]/g, "").split(' ')//.map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))
+              splitOriginal = original_string.toLowerCase().replace(/[^\w\s]/g, "").split(' ')//.map((b: string) => b.slice(0, b.length-Math.round(b.length * .4)))              
+              joinChar = ' ';
             }
             // 
 
@@ -191,11 +193,11 @@ class ShowTmx extends React.Component<
             
             let translatedWithColors = splitTranslated.map((v: string) => {
               return (filteredArrayTwo.indexOf(v) > -1) ? ("<span style='color:red; font-weight: bold;'>" + v + "</span>") : v
-            }).join('')
+            }).join(joinChar)
 
             let originalWithColors = splitOriginal.map((v: string) => {
               return (filteredArray.indexOf(v) > -1) ? ("<span style='color:red; font-weight: bold;'>" + v + "</span>") : v
-            }).join('')
+            }).join(joinChar)
 
             
               
