@@ -96,10 +96,13 @@ class ShowTmx extends React.Component<
       } else {
   
         let contents = this.state.TmxContents;
-        this.setState({toTranslate: contents[newPair][1]})
-        this.setState({source: contents[newPair][0]})
+        // Having hashtags and things in the contents was causing problems with
+        // gooogle translate, so I'm replacing them here.
+        this.setState({toTranslate: contents[newPair][1].replace(/#/g,"")})
+        this.setState({source: contents[newPair][0].replace(/#/g,"")})
         this.setState({comment: ""})
-        this.translate('&q=' + encodeURI(contents[newPair][1]), contents[newPair][0])
+        this.translate('&q=' + encodeURI(contents[newPair][1].replace(/#/g,"")), 
+                                         contents[newPair][0].replace(/#/g,""))
       }
     }
   
@@ -154,6 +157,7 @@ class ShowTmx extends React.Component<
     }
   
     translate = (string_to_translate: string, original_string: string) => {
+      console.log(string_to_translate)
   
       const requestOptions = {
         method: 'POST'
@@ -168,6 +172,7 @@ class ShowTmx extends React.Component<
             // 100% match higher, by shortening each word in the strings by 40%
             // and making everything lowercase and punctuation-free before comparing them
             let text = res.data.translations[0].translatedText.replace(/(&quot;)/g,"\"")
+            console.log(text)
             
             let splitTranslated: string[] = []
             let splitOriginal: string[] = []
