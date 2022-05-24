@@ -75,7 +75,7 @@ class CheckOrEdit extends React.Component<{}, {value: string}> {
                 <Button variant="secondary" size="lg" onClick={this.handleCheckClick}>逆引きチェックを行う</Button>
               </Col>
             </Row>
-            <Row style={{ marginTop: 20, marginBottom: 5}}>
+            {/* <Row style={{ marginTop: 20, marginBottom: 5}}>
             <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
               上記の逆引きチェックによってもし誤訳がありましたら、再翻訳が翻訳会社から頂いてから...
               </Col>
@@ -84,7 +84,7 @@ class CheckOrEdit extends React.Component<{}, {value: string}> {
                       <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
                 <Button variant="warning" size="lg" onClick={this.handleUpdateClick}>再翻訳によってメモリを更新</Button>
               </Col>
-            </Row>
+            </Row> */}
             <Row style={{ marginTop: 20, marginBottom: 5}}>
             <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
               逆引きチェックによる誤訳がない場合、納品されたトラドスプロジェクトから *.tmx ファイル（またはただの原文・訳文テキスト）を使って...
@@ -92,7 +92,7 @@ class CheckOrEdit extends React.Component<{}, {value: string}> {
             </Row>
             <Row>
               <Col style={{justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
-                <Button variant="success" size="lg" onClick={this.handleMergeClick}>メイン翻訳メモリを更新</Button>
+                <Button variant="success" size="lg" onClick={this.handleMergeClick}>翻訳メモリを更新</Button>
               </Col>
             </Row>
             <Row style={{ marginTop: 50, marginBottom: 5}}>
