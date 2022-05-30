@@ -56,7 +56,7 @@ return (
             this.setState({OkKizaiVariant: 'secondary'})
             this.setState({ToliVariant: 'secondary'})
           }}>滋賀案件</Button>
-          <Button variant={this.state.DaikinGeneralVariant} onClick={() => {
+          {/* <Button variant={this.state.DaikinGeneralVariant} onClick={() => {
             this.props.onChangeValue(['gillies@hotaru.ltd', 'DaikinGeneral'])
             this.setState({LogosVariant: 'secondary'})
             this.setState({KanaokaVariant: 'secondary'})
@@ -121,7 +121,7 @@ return (
             this.setState({HyodVariant: 'secondary'})
             this.setState({OkKizaiVariant: 'secondary'})
             this.setState({ToliVariant: 'info'})
-          }}>東リ案件</Button>
+          }}>東リ案件</Button> */}
       </ButtonGroup>
       </Col>
     </Row>

@@ -188,12 +188,12 @@ class CreateTmx extends React.Component<{},
                           <option value="SpecManual">仕様書</option>
                           <option value="InfoPlate">銘版</option>
                           <option value="SmartphoneApp">アプリ</option>
-                          <option value="LogosCatalog">ロゴスのカタログ</option>
+                          {/* <option value="LogosCatalog">ロゴスのカタログ</option>
                           <option value="ToliCatalog">東リのカタログ</option>
                           <option value="InfoPlate">銘版</option>
                           <option value="AirBoost">エア・ブースト（HYOD)</option>
                           <option value="Accessories">別売品</option>
-                          <option value="FlarelessJoint">フレアレスジョイント</option>
+                          <option value="FlarelessJoint">フレアレスジョイント</option> */}
                       </select>   
                       </Col>
                     </Row>
@@ -208,7 +208,8 @@ class CreateTmx extends React.Component<{},
                       }}>
                           <option value="en-us">英語(北米)</option>
                           <option value="en-uk">英語(UK)</option>
-                          <option value="fr-ca">フランス語(カナダ)</option>
+                          <option value="ja-jp">日本語</option>
+                          {/* <option value="fr-ca">フランス語(カナダ)</option>
                           <option value="es-mx">スペイン語(メキシコ)</option>
                           <option value="ja-jp">日本語</option>
                           <option value="zh-tw">繁体字</option>
@@ -232,7 +233,7 @@ class CreateTmx extends React.Component<{},
                           <option value="it-it">イタリア語</option>
                           <option value="pl-pl">ポーランド語</option>
                           <option value="tr-tr">トルコ語</option>
-                          <option value="ar-ar">アラビア語</option>
+                          <option value="ar-ar">アラビア語</option> */}
                       </select>
                     </Col>
                   </Row>
@@ -248,7 +249,8 @@ class CreateTmx extends React.Component<{},
                       }}>
                           <option value="en-us">英語(北米)</option>
                           <option value="en-uk">英語(UK)</option>
-                          <option value="fr-ca">フランス語(カナダ)</option>
+                          <option value="ja-jp">日本語</option>
+                          {/* <option value="fr-ca">フランス語(カナダ)</option>
                           <option value="es-mx">スペイン語(メキシコ)</option>
                           <option value="ja-jp">日本語</option>
                           <option value="zh-tw">繁体字</option>
@@ -272,7 +274,7 @@ class CreateTmx extends React.Component<{},
                           <option value="it-it">イタリア語</option>
                           <option value="pl-pl">ポーランド語</option>
                           <option value="tr-tr">トルコ語</option>
-                          <option value="ar-ar">アラビア語</option>
+                          <option value="ar-ar">アラビア語</option> */}
                       </select>   
                     </Col>
                   </Row>
